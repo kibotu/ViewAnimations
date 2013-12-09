@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Android Animations</string>
+    <string name="action_settings">Settings</string>
+    <string name="text_btn_start">Start Animation</string>
+
+    <!-- Display text -->
+    <string name="txt_fadein">This is fade in animation</string>
+
+</resources>
