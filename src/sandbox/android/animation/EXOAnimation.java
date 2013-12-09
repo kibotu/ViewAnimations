@@ -49,10 +49,10 @@ public class EXOAnimation {
                 spl = spline.pointAtTime(before.time + time * duration);
             }
 
-            Animation scaleAnimation = new EXOScaleAnimation((float) xScaleBefore, (float) xScale, (float) yScaleBefore, (float) yScale);
-            Animation moveAnimation = new EXOTranslateAnimation((float) xMoveBefore + splBefore.x, (float) xMove + spl.x, (float) yMoveBefore + splBefore.y, (float) yMove + spl.y);
+            Animation scaleAnimation = new ScaleAnimation((float) xScaleBefore, (float) xScale, (float) yScaleBefore, (float) yScale);
+            Animation moveAnimation = new TranslateAnimation((float) xMoveBefore + splBefore.x, (float) xMove + spl.x, (float) yMoveBefore + splBefore.y, (float) yMove + spl.y);
 
-            EXOAnimationSet animationSet = new EXOAnimationSet(true);
+            AnimationSet animationSet = new AnimationSet(true);
             animationSet.setDuration((long) durationStep);
             animationSet.setInterpolator(new LinearInterpolator());
 
@@ -96,81 +96,27 @@ public class EXOAnimation {
     }
 }
 
-class EXOTranslateAnimation extends TranslateAnimation {
-    public EXOTranslateAnimation(final Context context, final AttributeSet attrs) {
-        super(context, attrs);
-    }
-
-    EXOTranslateAnimation(final float fromXDelta, final float toXDelta, final float fromYDelta, final float toYDelta) {
-        super(fromXDelta, toXDelta, fromYDelta, toYDelta);
-    }
-
-    EXOTranslateAnimation(final int fromXType, final float fromXValue, final int toXType, final float toXValue, final int fromYType, final float fromYValue, final int toYType, final float toYValue) {
-        super(fromXType, fromXValue, toXType, toXValue, fromYType, fromYValue, toYType, toYValue);
-    }
-
-    @Override
-    public boolean getTransformation(long currentTime, Transformation outTransformation) {
-        boolean ret = super.getTransformation(currentTime, outTransformation);
-        return ret;
-    }
-}
-
-class EXOScaleAnimation extends ScaleAnimation {
-    public Transformation transform;
-
-    EXOScaleAnimation(final Context context, final AttributeSet attrs) {
-        super(context, attrs);
-    }
-
-    EXOScaleAnimation(final float fromX, final float toX, final float fromY, final float toY) {
-        super(fromX, toX, fromY, toY);
-    }
-
-    EXOScaleAnimation(final float fromX, final float toX, final float fromY, final float toY, final float pivotX, final float pivotY) {
-        super(fromX, toX, fromY, toY, pivotX, pivotY);
-    }
-
-    EXOScaleAnimation(final float fromX, final float toX, final float fromY, final float toY, final int pivotXType, final float pivotXValue, final int pivotYType, final float pivotYValue) {
-        super(fromX, toX, fromY, toY, pivotXType, pivotXValue, pivotYType, pivotYValue);
-    }
-
-    @Override
-    public boolean getTransformation(long currentTime, Transformation outTransformation) {
-        boolean ret = super.getTransformation(currentTime, outTransformation);
-        return ret;
-    }
-}
-
-class EXOAnimationSet extends AnimationSet {
-    public EXOMultiAnimationQueue multiQueue;
-
-    EXOAnimationSet(final Context context, final AttributeSet attrs) {
-        super(context, attrs);
-    }
-
-    EXOAnimationSet(final boolean shareInterpolator) {
-        super(shareInterpolator);
-    }
-
-    @Override
-    public boolean getTransformation(long currentTime, Transformation outTransformation) {
-        boolean ret = super.getTransformation(currentTime, outTransformation);
-
-        if (multiQueue != null) {
-            multiQueue.restoreTransformation = new Transformation();
-            multiQueue.restoreTransformation.set(outTransformation);
-        }
-
-        return ret;
-    }
-}
-
 class EXOSpline implements Spline.Callback {
     ArrayList<PointF> linearSpline = new ArrayList<PointF>();
-    final float fps = 1.f / 60.f;
+    final float fps = 1.0f / 25.0f;
+
+    float getTimeScale() {
+        return timeScale;
+    }
+
+    void setTimeScale(final float timeScale) {
+        this.timeScale = timeScale;
+    }
+
+    private void setDuration(final float duration)
+    {
+        setTimeScale((float)(linearSpline.size()) / duration);
+    }
+
+    public float timeScale = 1.0f;
 
     PointF pointAtTime(double time) {
+        time *= timeScale;
         if (linearSpline.isEmpty())
             return new PointF(0, 0);
         int iTime = (int) (time / fps);
@@ -180,6 +126,7 @@ class EXOSpline implements Spline.Callback {
     public void setValuesWithDuration(final List<PointF> points, final double duration) {
         //To change body of created methods use File | Settings | File Templates.
         Spline.doCubicHermiteSpline(points, fps, this);
+        setDuration((float)duration);
     }
 
     @Override

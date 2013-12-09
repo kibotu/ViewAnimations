@@ -37,7 +37,7 @@ public class ExoAnimationActivity extends Activity {
             points.add(point);
         }
         points.add(new PointF(0, 0));
-        spline.setValuesWithDuration(points, 10.0);
+        spline.setValuesWithDuration(points, 5.0);
         EXOAnimation.spline = spline;
 
         EXOAnimationState state = EXOAnimationState.get(0, 0, 0, 1, 1);

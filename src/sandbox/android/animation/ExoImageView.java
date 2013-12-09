@@ -28,32 +28,4 @@ public class EXOImageView extends ImageView {
     EXOImageView(final Context context) {
         super(context);
     }
-
-    void applyTransform(Transformation transform) {
-        additionalTransform = transform;
-        /*
-        if (transform != null)
-        {
-            RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)(this.getLayoutParams());
-            params.width = 10000;
-            params.height = 10000;
-            this.setLayoutParams(params);
-
-            this.setImageMatrix(transform.getMatrix());
-            this.setScaleType(ScaleType.CENTER);
-
-            invalidate();
-        }
-        */
-    }
-
-    @Override
-    protected void onAnimationEnd() {
-        super.onAnimationEnd();
-    }
-
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-    }
 }
