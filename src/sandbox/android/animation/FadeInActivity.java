@@ -4,72 +4,72 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.view.View;
 import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.view.animation.Animation.AnimationListener;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
 public class FadeInActivity extends Activity implements AnimationListener {
 
-	TextView txtMessage;
-	Button btnStart;
+    TextView txtMessage;
+    Button btnStart;
 
-	// Animation
-	Animation animFadein;
+    // Animation
+    Animation animFadein;
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_fadein);
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_fadein);
 
-		txtMessage = (TextView) findViewById(R.id.txtMessage);
-		btnStart = (Button) findViewById(R.id.btnStart);
+        txtMessage = (TextView) findViewById(R.id.txtMessage);
+        btnStart = (Button) findViewById(R.id.btnStart);
 
-		// load the animation
-		animFadein = AnimationUtils.loadAnimation(getApplicationContext(),
-				R.anim.fade_in);
-		
-		// set animation listener
-		animFadein.setAnimationListener(this);
+        // load the animation
+        animFadein = AnimationUtils.loadAnimation(getApplicationContext(),
+                R.anim.fade_in);
 
-		// button click event
-		btnStart.setOnClickListener(new View.OnClickListener() {
+        // set animation listener
+        animFadein.setAnimationListener(this);
 
-			@Override
-			public void onClick(View v) {
-				txtMessage.setVisibility(View.VISIBLE);
-				
-				// start the animation
-				txtMessage.startAnimation(animFadein);
-			}
-		});
+        // button click event
+        btnStart.setOnClickListener(new View.OnClickListener() {
 
-	}
+            @Override
+            public void onClick(View v) {
+                txtMessage.setVisibility(View.VISIBLE);
 
-	@Override
-	public void onAnimationEnd(Animation animation) {
-		// Take any action after completing the animation
+                // start the animation
+                txtMessage.startAnimation(animFadein);
+            }
+        });
 
-		// check for fade in animation
-		if (animation == animFadein) {
-			Toast.makeText(getApplicationContext(), "Animation Stopped",
-					Toast.LENGTH_SHORT).show();
-		}
+    }
 
-	}
+    @Override
+    public void onAnimationEnd(Animation animation) {
+        // Take any action after completing the animation
 
-	@Override
-	public void onAnimationRepeat(Animation animation) {
-		// TODO Auto-generated method stub
+        // check for fade in animation
+        if (animation == animFadein) {
+            Toast.makeText(getApplicationContext(), "Animation Stopped",
+                    Toast.LENGTH_SHORT).show();
+        }
 
-	}
+    }
 
-	@Override
-	public void onAnimationStart(Animation animation) {
-		// TODO Auto-generated method stub
+    @Override
+    public void onAnimationRepeat(Animation animation) {
+        // TODO Auto-generated method stub
 
-	}
+    }
+
+    @Override
+    public void onAnimationStart(Animation animation) {
+        // TODO Auto-generated method stub
+
+    }
 
 }

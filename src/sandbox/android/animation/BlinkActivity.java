@@ -11,60 +11,60 @@ import android.widget.TextView;
 
 public class BlinkActivity extends Activity implements AnimationListener {
 
-	TextView txtMessage;
-	Button btnStart;
+    TextView txtMessage;
+    Button btnStart;
 
-	// Animation
-	Animation animBlink;
+    // Animation
+    Animation animBlink;
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_blink);
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_blink);
 
-		txtMessage = (TextView) findViewById(R.id.txtMessage);
-		btnStart = (Button) findViewById(R.id.btnStart);
+        txtMessage = (TextView) findViewById(R.id.txtMessage);
+        btnStart = (Button) findViewById(R.id.btnStart);
 
-		// load the animation
-		animBlink = AnimationUtils.loadAnimation(getApplicationContext(),
-				R.anim.blink);
-		
-		// set animation listener
-		animBlink.setAnimationListener(this);
+        // load the animation
+        animBlink = AnimationUtils.loadAnimation(getApplicationContext(),
+                R.anim.blink);
 
-		// button click event
-		btnStart.setOnClickListener(new View.OnClickListener() {
+        // set animation listener
+        animBlink.setAnimationListener(this);
 
-			@Override
-			public void onClick(View v) {
-				txtMessage.setVisibility(View.VISIBLE);
-				
-				// start the animation
-				txtMessage.startAnimation(animBlink);
-			}
-		});
+        // button click event
+        btnStart.setOnClickListener(new View.OnClickListener() {
 
-	}
+            @Override
+            public void onClick(View v) {
+                txtMessage.setVisibility(View.VISIBLE);
 
-	@Override
-	public void onAnimationEnd(Animation animation) {
-		// Take any action after completing the animation
+                // start the animation
+                txtMessage.startAnimation(animBlink);
+            }
+        });
 
-		// check for blink animation
-		if (animation == animBlink) {
-		}
+    }
 
-	}
+    @Override
+    public void onAnimationEnd(Animation animation) {
+        // Take any action after completing the animation
 
-	@Override
-	public void onAnimationRepeat(Animation animation) {
+        // check for blink animation
+        if (animation == animBlink) {
+        }
 
-	}
+    }
 
-	@Override
-	public void onAnimationStart(Animation animation) {
+    @Override
+    public void onAnimationRepeat(Animation animation) {
 
-	}
+    }
+
+    @Override
+    public void onAnimationStart(Animation animation) {
+
+    }
 
 }

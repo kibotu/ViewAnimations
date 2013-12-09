@@ -12,7 +12,9 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-
+        <activity
+                android:name="ExoAnimationActivity"
+                android:label="@string/app_name" />
         <activity
                 android:name="FadeInActivity"
                 android:label="@string/app_name" />
@@ -51,6 +53,9 @@
                 android:label="@string/app_name" />
         <activity
                 android:name="TogetherActivity"
+                android:label="@string/app_name" />
+        <activity
+                android:name=".spirtes.ElaineAnimatedActivity"
                 android:label="@string/app_name" />
     </application>
 </manifest> 

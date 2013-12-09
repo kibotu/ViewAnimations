@@ -12,6 +12,13 @@
             android:orientation="horizontal" >
 
             <Button
+                    android:id="@+id/btnExoanimation"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:text="Exoanimation" />
+            <Button
                 android:id="@+id/btnFadeIn"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -164,6 +171,14 @@
                 android:layout_margin="5dp"
                 android:layout_weight="1"
                 android:text="Together Animation" />
+
+            <Button
+                    android:id="@+id/btnSprites"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:text="Sprite Animation" />
         </TableRow>
     </TableLayout>
 
