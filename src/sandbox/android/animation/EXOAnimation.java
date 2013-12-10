@@ -53,7 +53,7 @@ class EXOAnimationState {
             this.posX *= val;
             this.posY *= val;
             this.rotation *= val;
-            this.alpha *= val;
+            this.alpha = (this.alpha-1.0)*val+1.0;
             this.sheerX *= val;
             this.sheerY *= val;
         }
