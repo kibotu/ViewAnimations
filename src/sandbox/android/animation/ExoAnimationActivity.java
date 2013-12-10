@@ -5,25 +5,106 @@ import android.graphics.PointF;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
 
 import java.util.ArrayList;
 
 public class ExoAnimationActivity extends Activity {
 
     Button btnStart;
-    EXOImageView imgLogo;
+    RelativeLayout layout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_move);
+        setContentView(R.layout.activity_exoanim);
+        layout = (RelativeLayout) findViewById(R.id.mainLayout);
     }
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
 
-        imgLogo = (EXOImageView) findViewById(R.id.imgLogo);
+        createIntroScreenScene();
+    }
+
+    /**
+     * @see <a href="https://redmine.exozet.com/projects/lines/wiki/Screen_support_and_definitions">Screen_support_and_definitions</a>
+     */
+    enum Scale {
+
+        x320(0.2083f, 0.208333f),
+        x480(0.3125f, 0.3125f),
+        x540(0.3515625f, 0.35156f),
+        x600(0.390625f, 0.390625f),
+        x720(0.46875f, 0.46875f),
+        x768(0.5f, 0.50f),
+        x800(0.52083f, 0.520833f),
+        x1080(0.703125f, 0.703125f),
+        NO_SCALING(1, 1);
+
+        private final float scaleX, scaleY;
+
+        private Scale(final float scaleX, final float scaleY) {
+            this.scaleX = scaleX;
+            this.scaleY = scaleY;
+        }
+
+        public float scaleX(final float x) {
+            return x * scaleX / x720.scaleX;
+        }
+
+        public float scaleY(final float y) {
+            return y * scaleY / x720.scaleY;
+        }
+    }
+
+    /**
+     * @see <a href="https://redmine.exozet.com/issues/37448">Export Intro Screen</a>
+     */
+    public void createIntroScreenScene() {
+
+        Scale s = Scale.x480;
+
+        addImage(355, 576, R.drawable.bg, s);               // bg 355*576
+        addImage(67, 1080, R.drawable.critter_1, s);        // critter_1 067*1080
+        addImage(435, 1067, R.drawable.critter_2, s);       // critter_2 435*1067
+        addImage(845, 1135, R.drawable.critter_3, s);       // critter_3 845*1135
+        addImage(209, 894, R.drawable.critter_4, s);        // critter_4 209*894
+        addImage(355, 576, R.drawable.jelly_blue, s);       // jelly_blue 355*576
+        addImage(355, 576, R.drawable.jelly_green, s);      // jelly_green 355*576
+        addImage(355, 576, R.drawable.jelly_pink, s);       // jelly_pink 355*576
+        addImage(355, 576, R.drawable.jelly_red, s);        // jelly_red 355*576
+        addImage(355, 576, R.drawable.jelly_yellow, s);     // jelly_yellow 355*576
+        addImage(294, 268, R.drawable.logo, s);             // logo 294*268
+        addImage(314, 242, R.drawable.ray, s);              // ray 314*242
+        addImage(239, 530, R.drawable.speech_ballon, s);    // speech_ballon 239*530
+        addImage(51, 564, R.drawable.tree_ol_1, s);         // tree_ol_1 051*564
+        addImage(909, 111, R.drawable.tree_ol_2, s);        // tree_ol_2 909*111
+        addImage(728, 0, R.drawable.tree_ol_3, s);          // tree_ol_3 728*000
+    }
+
+    public EXOImageView addImage(final int x, final int y, final int resourceId, final Scale scale) {
+        EXOImageView img = new EXOImageView(this);
+        img.setImageResource(resourceId);
+        RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+        lp.width = (int) scale.scaleX(img.getDrawable().getIntrinsicWidth());
+        lp.height = (int) scale.scaleY(img.getDrawable().getIntrinsicHeight());
+        lp.setMargins((int) scale.scaleX(x) - lp.width / 2, (int) scale.scaleY(y) - lp.height / 2, 0, 0);
+
+        img.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        img.setAdjustViewBounds(true);
+        img.setLayoutParams(lp);
+        layout.addView(img);
+        return img;
+    }
+
+    public void testAnimStuff() {
+
+        EXOImageView imgLogo = addImage(50, 150, R.drawable.mr_bean, Scale.NO_SCALING);
+        EXOImageView imgLogo2 = addImage(200, 200, R.drawable.mr_bean, Scale.NO_SCALING);
+
         btnStart = (Button) findViewById(R.id.btnStart);
 
         EXOAnimationCollection collection = new EXOAnimationCollection();
@@ -42,7 +123,7 @@ public class ExoAnimationActivity extends Activity {
         collection.addElement(EXOAnimationElementWobble.create(0,10,0.2,25));
 
         final EXOAnimationQueue queue = new EXOAnimationQueue();
-        queue.generateWithCollection(collection,imgLogo);
+        queue.generateWithCollection(collection, imgLogo);
         queue.looping = false;
 
 

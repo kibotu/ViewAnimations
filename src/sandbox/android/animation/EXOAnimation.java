@@ -156,7 +156,7 @@ class EXOAnimationElementSpline extends EXOAnimationElement implements Spline.Ca
         ret.setSplineDuration((float) ret.duration);
 
         return ret;
-    } 
+    }
     @Override
     public EXOAnimationState stateAtTime(double time, EXOImageView image)
     {
