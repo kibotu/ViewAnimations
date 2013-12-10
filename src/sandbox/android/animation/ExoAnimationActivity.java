@@ -52,12 +52,22 @@ public class ExoAnimationActivity extends Activity {
         }
 
         public float scaleX(final float x) {
-            return x * scaleX / x720.scaleX;
+            return x * scaleX / x768.scaleX;
         }
 
         public float scaleY(final float y) {
-            return y * scaleY / x720.scaleY;
+            return y * scaleY / x768.scaleY;
         }
+    }
+
+
+    public void runAnimation(EXOImageView view,EXOAnimationCollection collection)
+    {
+        final EXOAnimationQueue queue = new EXOAnimationQueue();
+        queue.fps = 1.0 / 2.0;
+        queue.generateWithCollection(collection, view);
+        queue.looping = true;
+        queue.run();
     }
 
     /**
@@ -67,22 +77,36 @@ public class ExoAnimationActivity extends Activity {
 
         Scale s = Scale.x480;
 
+        EXOAnimationCollection collection = new EXOAnimationCollection();
+
         addImage(355, 576, R.drawable.bg, s);               // bg 355*576
         addImage(67, 1080, R.drawable.critter_1, s);        // critter_1 067*1080
         addImage(435, 1067, R.drawable.critter_2, s);       // critter_2 435*1067
         addImage(845, 1135, R.drawable.critter_3, s);       // critter_3 845*1135
         addImage(209, 894, R.drawable.critter_4, s);        // critter_4 209*894
-        addImage(355, 576, R.drawable.jelly_blue, s);       // jelly_blue 355*576
-        addImage(355, 576, R.drawable.jelly_green, s);      // jelly_green 355*576
-        addImage(355, 576, R.drawable.jelly_pink, s);       // jelly_pink 355*576
-        addImage(355, 576, R.drawable.jelly_red, s);        // jelly_red 355*576
-        addImage(355, 576, R.drawable.jelly_yellow, s);     // jelly_yellow 355*576
+        EXOImageView blue = addImage(355, 576, R.drawable.jelly_blue, s);       // jelly_blue 355*576
+        EXOImageView green = addImage(355, 576, R.drawable.jelly_green, s);      // jelly_green 355*576
+        EXOImageView pink = addImage(355, 576, R.drawable.jelly_pink, s);       // jelly_pink 355*576
+        EXOImageView red = addImage(355, 576, R.drawable.jelly_red, s);        // jelly_red 355*576
+        EXOImageView yellow = addImage(355, 576, R.drawable.jelly_yellow, s);     // jelly_yellow 355*576
+        EXOImageView ray = addImage(314, 242, R.drawable.ray, s);              // ray 314*242
         addImage(294, 268, R.drawable.logo, s);             // logo 294*268
-        addImage(314, 242, R.drawable.ray, s);              // ray 314*242
         addImage(239, 530, R.drawable.speech_ballon, s);    // speech_ballon 239*530
         addImage(51, 564, R.drawable.tree_ol_1, s);         // tree_ol_1 051*564
         addImage(909, 111, R.drawable.tree_ol_2, s);        // tree_ol_2 909*111
         addImage(728, 0, R.drawable.tree_ol_3, s);          // tree_ol_3 728*000
+
+        ArrayList<PointF> points = new ArrayList<PointF>(100);
+        points.add(new PointF(0, 0));
+        for (int i = 0; i < 100; ++i) {
+            PointF point = new PointF();
+            point.x = (float) (Math.random() * 240.f);
+            point.y = (float) (Math.random() * 400.f);
+            points.add(point);
+        }
+
+        runAnimation(blue,EXOAnimationCollection.create().addAnimation(EXOAnimationElementRotate.create(0,80,16)).addAnimation(EXOAnimationElementSpline.create(0,80, points)));
+        runAnimation(ray,EXOAnimationCollection.create().addAnimation(EXOAnimationElementRotate.create(0,80,16)));
     }
 
     public EXOImageView addImage(final int x, final int y, final int resourceId, final Scale scale) {

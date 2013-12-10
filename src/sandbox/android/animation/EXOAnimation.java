@@ -103,7 +103,8 @@ class EXOAnimationElement implements AnimStateGetter
     {
         pure,
         spline,
-        wobble
+        wobble,
+        rotate
     }
     double startTime;
     double duration;
@@ -132,7 +133,7 @@ class EXOAnimationElement implements AnimStateGetter
     public EXOAnimationState getStateForGlobalTime(double time, EXOImageView image)
     {
         if (time >= startTime && time < startTime + duration)
-            return stateAtTime(time-startTime,image).fadeCurve((time-startTime)/duration,fadeCurve);
+            return stateAtTime(time-startTime,image).fadeCurve((time - startTime) / duration, fadeCurve);
         return null;
     }
 }
@@ -235,9 +236,48 @@ class EXOAnimationElementWobble extends EXOAnimationElement
     }
 }
 
+class EXOAnimationElementRotate extends EXOAnimationElement
+{
+    double repeats = 1.0;
+
+    EXOAnimationElementRotate()
+    {
+        elementType = ElementType.rotate;
+    }
+
+    static EXOAnimationElementRotate create(double startTime, double endTime, double repeats)
+    {
+        EXOAnimationElementRotate ret = new EXOAnimationElementRotate();
+        ret.startTime = startTime;
+        ret.duration = endTime - startTime;
+        ret.repeats = repeats;
+
+        return ret;
+    }
+
+    @Override
+    public EXOAnimationState stateAtTime(double time, EXOImageView image)
+    {
+        EXOAnimationState ret = EXOAnimationState.identity();
+        ret.rotation = time * repeats / duration * 360.0;
+        return ret;
+    }
+}
+
 class EXOAnimationCollection
 {
     ArrayList<EXOAnimationElement> elements = new ArrayList<EXOAnimationElement>();
+
+    public static EXOAnimationCollection create()
+    {
+        return new EXOAnimationCollection();
+    }
+
+    public EXOAnimationCollection addAnimation(EXOAnimationElement element)
+    {
+        addElement(element);
+        return this;
+    }
 
     void addElement(EXOAnimationElement element)
     {
@@ -274,6 +314,7 @@ class EXOAnimationCollection
 
         Animation scaleAnimation    = new ScaleAnimation    ((float)state1.scaleX, (float)state2.scaleX, (float)state1.scaleY,(float)state2.scaleY);
         Animation moveAnimation     = new TranslateAnimation((float)state1.posX,   (float)state2.posX,   (float)state1.posY,  (float)state2.posY);
+        Animation rotateAnimation   = new RotateAnimation((float)state1.rotation,(float)state2.rotation,Animation.RELATIVE_TO_SELF,0.5f,Animation.RELATIVE_TO_SELF,0.5f);
 
         AnimationSet animationSet = new AnimationSet(true);
         animationSet.setDuration((long) ((time2-time1)*1000.0));
@@ -281,6 +322,7 @@ class EXOAnimationCollection
 
         animationSet.addAnimation(scaleAnimation);
         animationSet.addAnimation(moveAnimation);
+        animationSet.addAnimation(rotateAnimation);
 /*
         animationSet.setFillAfter(true);
         animationSet.setFillBefore(true);
@@ -319,7 +361,8 @@ class EXOAnimationQueue implements Animation.AnimationListener {
     boolean looping = false;
     EXOImageView viewToRunOn;
     Animation currentActive;
-    final double fps = 1.0 / 25.0;
+    double fps = 1.0 / 25.0;
+
 
     void generateWithCollection(EXOAnimationCollection collection,EXOImageView toStartOn)
     {
