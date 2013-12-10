@@ -1,141 +1,15 @@
 package sandbox.android.animation;
 
-import android.content.Context;
 import android.graphics.PointF;
-import android.util.AttributeSet;
 import android.view.animation.*;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
-public class EXOAnimation {
-
-    int tesselation = 50;
-    ArrayList<Animation> animationParts = new ArrayList<Animation>();
-    EXOAnimationState startState;
-
-    public static EXOSpline spline = null;
-
-    EXOAnimationState generateTempAnimation(EXOAnimationState before, EXOImageView image) {
-        return addWobbleAnimation(before, 5.0, 0.1, 4.0, image);
-    }
-
-    EXOAnimationState addWobbleAnimation(EXOAnimationState before, double duration, double factor, double repeats, EXOImageView image) {
-        startState = before;
-        double imageWidth = image.getWidth();
-        double imageHeight = image.getHeight();
-        double timeStep = 1.0 / (tesselation - 1);
-        double durationStep = duration / (tesselation - 1) * 1000.0;
-        double time = 0.0;
-        double xScaleBefore = before.scaleX;
-        double yScaleBefore = before.scaleY;
-        double xMoveBefore = before.posX;
-        double yMoveBefore = before.posY;
-        PointF splBefore = new PointF(0.f, 0.f);
-        if (spline != null) {
-            splBefore = spline.pointAtTime(before.time);
-        }
-
-        for (int i = 0; i < tesselation; ++i) {
-            double wobble = Math.sin(time * Math.PI * 2.0 * repeats) * factor;
-            double xScale = before.scaleX + wobble;
-            double yScale = before.scaleY / xScale;
-            double xMove = before.posX + imageWidth * (1.0 - xScale) * 0.5;
-            double yMove = before.posY + imageHeight * (1.0 - yScale) * 0.5;
-
-            PointF spl = new PointF(0.f, 0.f);
-            if (spline != null) {
-                spl = spline.pointAtTime(before.time + time * duration);
-            }
-
-            Animation scaleAnimation = new ScaleAnimation((float) xScaleBefore, (float) xScale, (float) yScaleBefore, (float) yScale);
-            Animation moveAnimation = new TranslateAnimation((float) xMoveBefore + splBefore.x, (float) xMove + spl.x, (float) yMoveBefore + splBefore.y, (float) yMove + spl.y);
-
-            AnimationSet animationSet = new AnimationSet(true);
-            animationSet.setDuration((long) durationStep);
-            animationSet.setInterpolator(new LinearInterpolator());
-
-            animationSet.addAnimation(scaleAnimation);
-            animationSet.addAnimation(moveAnimation);
-
-            animationSet.setFillAfter(true);
-            animationSet.setFillBefore(true);
-            animationSet.setFillEnabled(true);
-
-            animationParts.add(animationSet);
-
-            time += timeStep;
-            xScaleBefore = xScale;
-            yScaleBefore = yScale;
-            xMoveBefore = xMove;
-            yMoveBefore = yMove;
-            splBefore = spl;
-        }
-        EXOAnimationState ret = EXOAnimationState.get(before.time + duration, xMoveBefore, yMoveBefore, xScaleBefore, yScaleBefore);
-        return ret;
-    }
-
-    int getAnimationIndex(Animation animation) {
-        for (int i = 0; i < animationParts.size(); ++i) {
-            if (animation.equals(animationParts.get(i)))
-                return i;
-        }
-        return -1;
-    }
-
-    boolean containsAnimation(Animation animation) {
-        return getAnimationIndex(animation) != -1;
-    }
-
-    Animation next(Animation current) {
-        int index = getAnimationIndex(current);
-        if ((index == -1) || (index == animationParts.size() - 1))
-            return null;
-        return animationParts.get(index + 1);
-    }
+interface AnimStateGetter
+{
+    public EXOAnimationState stateAtTime(double time, EXOImageView image);
 }
-
-class EXOSpline implements Spline.Callback {
-    ArrayList<PointF> linearSpline = new ArrayList<PointF>();
-    final float fps = 1.0f / 25.0f;
-
-    float getTimeScale() {
-        return timeScale;
-    }
-
-    void setTimeScale(final float timeScale) {
-        this.timeScale = timeScale;
-    }
-
-    private void setDuration(final float duration)
-    {
-        setTimeScale((float)(linearSpline.size()) / duration);
-    }
-
-    public float timeScale = 1.0f;
-
-    PointF pointAtTime(double time) {
-        time *= timeScale;
-        if (linearSpline.isEmpty())
-            return new PointF(0, 0);
-        int iTime = (int) (time / fps);
-        return linearSpline.get(iTime % linearSpline.size());
-    }
-
-    public void setValuesWithDuration(final List<PointF> points, final double duration) {
-        //To change body of created methods use File | Settings | File Templates.
-        Spline.doCubicHermiteSpline(points, fps, this);
-        setDuration((float)duration);
-    }
-
-    @Override
-    public void doCallback(final float x, final float y) {
-        linearSpline.add(new PointF(x, y));
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-}
-
 
 class EXOAnimationState {
     double scaleX, scaleY;
@@ -143,7 +17,6 @@ class EXOAnimationState {
     double rotation;
     double alpha;
     double sheerX, sheerY;
-    double time;
 
     static EXOAnimationState identity() {
         EXOAnimationState ret = new EXOAnimationState();
@@ -153,58 +26,257 @@ class EXOAnimationState {
         ret.rotation = 0.0;
         ret.alpha = 1.0;
         ret.sheerX = ret.sheerY = 0.0;
-        ret.time = 0;
 
         return ret;
     }
 
-    static EXOAnimationState get(double time, double posX, double posY, double scaleX, double scaleY) {
-        EXOAnimationState ret = new EXOAnimationState();
+    public void combine(EXOAnimationState second)
+    {
+        this.scaleX *= second.scaleX;
+        this.scaleY *= second.scaleY;
+        this.posX += second.posX;
+        this.posY += second.posY;
+        this.rotation += second.rotation;
+        this.alpha *= second.alpha;
+        this.sheerX += second.sheerX;
+        this.sheerY += second.sheerY;
+    }
 
-        ret.posX = posX;
-        ret.posY = posY;
-        ret.scaleX = scaleX;
-        ret.scaleY = scaleY;
-        ret.time = time;
+}
+
+class EXOAnimationElement implements AnimStateGetter
+{
+    enum ElementType
+    {
+        pure,
+        spline,
+        wobble
+    }
+    double startTime;
+    double duration;
+    ElementType elementType;
+
+    EXOAnimationElement()
+    {
+        elementType = ElementType.pure;
+        startTime = 0.0;
+        duration = 0.0;
+    }
+
+    @Override
+    public EXOAnimationState stateAtTime(double time, EXOImageView image)
+    {
+        return EXOAnimationState.identity();
+    }
+
+    public EXOAnimationState getStateForGlobalTime(double time, EXOImageView image)
+    {
+        if (time >= startTime && time < startTime + duration)
+            return stateAtTime(time-startTime,image);
+        return null;
+    }
+}
+
+class EXOAnimationElementSpline extends EXOAnimationElement implements Spline.Callback
+{
+    EXOAnimationElementSpline()
+    {
+        elementType = ElementType.spline;
+    }
+
+    static EXOAnimationElementSpline create(double startTime, double endTime, List<PointF> points)
+    {
+        EXOAnimationElementSpline ret = new EXOAnimationElementSpline();
+        ret.startTime = startTime;
+        ret.duration = endTime - startTime;
+        ret.points = points;
+
+        ret.linearSpline.clear();
+        Spline.doCubicHermiteSpline(points, ret.fps, ret);
+        ret.setSplineDuration((float) duration);
+
+        return ret;
+    } 
+    @Override
+    public EXOAnimationState stateAtTime(double time, EXOImageView image)
+    {
+        EXOAnimationState ret = EXOAnimationState.identity();
+        PointF p = pointAtTime(time);
+        ret.posX = p.x;
+        ret.posY = p.y;
+        return ret;
+    }
+
+    protected ArrayList<PointF> linearSpline = new ArrayList<PointF>();
+    protected float timeScale = 1.0f;
+    protected float fps = 1.0f / 25.0f;
+
+     List<PointF> points;
+
+    protected float getTimeScale() {
+        return timeScale;
+    }
+    protected void setTimeScale(final float timeScale) {
+        this.timeScale = timeScale;
+    }
+    protected void setSplineDuration(final float duration)
+    {
+        setTimeScale((float)(linearSpline.size()) / duration);
+    }
+
+    protected PointF pointAtTime(double time) {
+        time *= timeScale;
+        if (linearSpline.isEmpty())
+            return new PointF(0, 0);
+        int iTime = (int) (time / fps);
+        return linearSpline.get(iTime % linearSpline.size());
+    }
+
+    @Override
+    public void doCallback(final float x, final float y) {
+        linearSpline.add(new PointF(x, y));
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+}
+
+class EXOAnimationElementWobble extends EXOAnimationElement
+{
+    double repeats = 1.0;
+    double factor = 1.0;
+
+    EXOAnimationElementWobble()
+    {
+        elementType = ElementType.wobble;
+    }
+
+    static EXOAnimationElementWobble create(double startTime, double endTime, double factor, double repeats)
+    {
+        EXOAnimationElementWobble ret = new EXOAnimationElementWobble();
+        ret.startTime = startTime;
+        ret.duration = endTime - startTime;
+        ret.factor = factor;
+        ret.repeats = repeats;
+
+        return ret;
+    }
+
+    @Override
+    public EXOAnimationState stateAtTime(double time, EXOImageView image)
+    {
+        double wobble = Math.sin(time * Math.PI * 2.0 * repeats / duration) * factor;
+        double xScale = 1.0 + wobble;
+        double yScale = 1.0 / xScale;
+
+        EXOAnimationState ret = EXOAnimationState.identity();
+        ret.scaleX = xScale;
+        ret.scaleY = yScale;
 
         return ret;
     }
 }
 
-class EXOMultiAnimationQueue {
-    LinkedList<Animation> currentlyPlayed = new LinkedList<Animation>();
-    EXOImageView viewTheQueueRunsOn;
-    Transformation restoreTransformation;
+class EXOAnimationCollection
+{
+    ArrayList<EXOAnimationElement> elements = new ArrayList();
 
-    void startAnimation(Animation animation) {
-        if (animation != null)
-            viewTheQueueRunsOn.startAnimation(animation);
+    void addElement(EXOAnimationElement element)
+    {
+        elements.add(element);
     }
 
-    void removeAnimation(Animation animation) {
-        currentlyPlayed.remove(animation);
-        //startAnimation(null);
+    EXOAnimationState getCombinedStateAtTime(double time, EXOImageView image)
+    {
+        EXOAnimationState ret = EXOAnimationState.identity();
+        for (int i = 0; i < elements.size(); ++i)
+        {
+            EXOAnimationElement element = elements.get(i);
+
+            EXOAnimationState state = element.getStateForGlobalTime(time,image);
+            if (state != null)
+                ret.combine(state);
+        }
+        return ret;
+    }
+
+    void fixStateAnchorPoint(EXOAnimationState state, EXOImageView image)
+    {
+        state.posX += state.scaleX * (1.0 - image.getWidth()) * 0.5;
+        state.posY += state.scaleY * (1.0 - image.getHeight()) * 0.5;
+    }
+
+    Animation generateAnimationFromTimeToTime(double time1, double time2, EXOImageView image)
+    {
+        EXOAnimationState state1 = getCombinedStateAtTime(time1, image);
+        EXOAnimationState state2 = getCombinedStateAtTime(time2, image);
+
+        fixStateAnchorPoint(state1,image);
+        fixStateAnchorPoint(state2,image);
+
+        Animation scaleAnimation    = new ScaleAnimation    ((float)state1.scaleX, (float)state2.scaleX, (float)state1.scaleY,(float)state2.scaleY);
+        Animation moveAnimation     = new TranslateAnimation((float)state1.posX,   (float)state2.posX,   (float)state1.posY,  (float)state2.posY);
+
+        AnimationSet animationSet = new AnimationSet(true);
+        animationSet.setDuration((long) ((time2-time1)*1000.0));
+        animationSet.setInterpolator(new LinearInterpolator());
+
+        animationSet.addAnimation(scaleAnimation);
+        animationSet.addAnimation(moveAnimation);
+
+        animationSet.setFillAfter(true);
+        animationSet.setFillBefore(true);
+        animationSet.setFillEnabled(true);
+
+        return animationSet;
+    }
+
+    ArrayList<Animation> generateWholeAnimation(double timeDelta,EXOImageView image)
+    {
+        double startTime = 0.0;
+        double endTime = 0.0;
+        for (int i = 0; i < elements.size(); ++i)
+        {
+            EXOAnimationElement element = elements.get(i);
+            double endHere = element.startTime + element.duration;
+
+            if (endHere > endTime) endTime = endHere;
+        }
+
+        ArrayList<Animation> ret = new ArrayList<Animation>();
+        for (double time = startTime; time < endTime; time += timeDelta)
+        {
+            Animation anim = generateAnimationFromTimeToTime(time,time+timeDelta,image);
+            ret.add(anim);
+        }
+
+        return ret;
     }
 }
 
 class EXOAnimationQueue implements Animation.AnimationListener {
 
-    EXOMultiAnimationQueue multiQueue = new EXOMultiAnimationQueue();
-    LinkedList<EXOAnimation> animationQueue = new LinkedList<EXOAnimation>();
-
-    int currentIndex = 0;
-    EXOAnimation currentActive;
-
+    ArrayList<Animation> animations = new ArrayList<Animation>();
+    int currentIndex;
     boolean looping = false;
+    EXOImageView viewToRunOn;
+    Animation currentActive;
+    final double fps = 1.0 / 25.0;
 
-    void run() {
+    void generateWithCollection(EXOAnimationCollection collection,EXOImageView toStartOn)
+    {
+        viewToRunOn = toStartOn;
+        animations = collection.generateWholeAnimation(fps,viewToRunOn);
+    }
+
+    void run()
+    {
         currentIndex = -1;
         next();
     }
 
-    boolean next() {
+    boolean next()
+    {
         currentIndex++;
-        if (currentIndex == animationQueue.size()) {
+        if (currentIndex == animations.size()) {
             if (looping) {
                 run();
                 return true;
@@ -212,51 +284,31 @@ class EXOAnimationQueue implements Animation.AnimationListener {
             return false;
         }
 
-        currentActive = animationQueue.get(currentIndex);
-        if (currentActive != null) {
-            if (!currentActive.animationParts.isEmpty())
-                multiQueue.startAnimation(currentActive.animationParts.get(0));
-            else
-                return next();
+        currentActive = animations.get(currentIndex);
+        if (currentActive != null)
+        {
+            currentActive.setAnimationListener(this);
+            viewToRunOn.startAnimation(currentActive);
         }
+        else
+            return next();
         return true;
     }
 
-    void add(EXOAnimation anim) {
-        if (anim.animationParts.isEmpty())
-            return;
-        animationQueue.add(anim);
-        for (int i = 0; i < anim.animationParts.size(); ++i) {
-            // eine Animation kann im Moment nur einer Queue zugeordnet sein
-            anim.animationParts.get(i).setAnimationListener(this);
-        }
-    }
-
-    void startAnimation(EXOImageView toStartOn) {
-        multiQueue.viewTheQueueRunsOn = toStartOn;
-        //multiQueue.viewTheQueueRunsOn.queue = this;
-        run();
+    @Override
+    public void onAnimationStart(final Animation animation)
+    {
     }
 
     @Override
-    public void onAnimationStart(final Animation animation) {
+    public void onAnimationEnd(final Animation animation)
+    {
+        if (currentActive == animation)
+            next();
     }
 
     @Override
-    public void onAnimationEnd(final Animation animation) {
-
-        if (currentActive.containsAnimation(animation)) {
-            multiQueue.removeAnimation(animation);
-            Animation nextOne = currentActive.next(animation);
-
-            if (nextOne == null)
-                next();
-            else
-                multiQueue.startAnimation(nextOne);
-        }
-    }
-
-    @Override
-    public void onAnimationRepeat(final Animation animation) {
+    public void onAnimationRepeat(final Animation animation)
+    {
     }
 }
