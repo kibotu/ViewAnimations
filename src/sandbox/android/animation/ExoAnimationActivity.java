@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.graphics.PointF;
 import android.os.Bundle;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -17,6 +19,8 @@ public class ExoAnimationActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_exoanim);
         layout = (RelativeLayout) findViewById(R.id.mainLayout);
@@ -84,10 +88,10 @@ public class ExoAnimationActivity extends Activity {
         addImage(845, 1135, R.drawable.critter_3, s);       // critter_3 845*1135
         addImage(209, 894, R.drawable.critter_4, s);        // critter_4 209*894
         EXOImageView blue = addImage(355, 576, R.drawable.jelly_blue, s);       // jelly_blue 355*576
-        EXOImageView green = addImage(355, 576, R.drawable.jelly_green, s);      // jelly_green 355*576
-        EXOImageView pink = addImage(355, 576, R.drawable.jelly_pink, s);       // jelly_pink 355*576
-        EXOImageView red = addImage(355, 576, R.drawable.jelly_red, s);        // jelly_red 355*576
-        EXOImageView yellow = addImage(355, 576, R.drawable.jelly_yellow, s);     // jelly_yellow 355*576
+        EXOImageView green = addImage(355+100, 576, R.drawable.jelly_green, s);      // jelly_green 355*576
+        EXOImageView pink = addImage(355+200, 576, R.drawable.jelly_pink, s);       // jelly_pink 355*576
+        EXOImageView red = addImage(355+300, 576, R.drawable.jelly_red, s);        // jelly_red 355*576
+        EXOImageView yellow = addImage(355+400, 576, R.drawable.jelly_yellow, s);     // jelly_yellow 355*576
         EXOImageView ray = addImage(314, 242, R.drawable.ray, s);              // ray 314*242
         addImage(294, 268, R.drawable.logo, s);             // logo 294*268
         addImage(239, 530, R.drawable.speech_ballon, s);    // speech_ballon 239*530
