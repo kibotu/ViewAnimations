@@ -39,6 +39,7 @@ public class ExoAnimationActivity extends Activity {
 
         collection.addElement(EXOAnimationElementSpline.create(0,10,points));
         collection.addElement(EXOAnimationElementWobble.create(5,10,0.5,5));
+        collection.addElement(EXOAnimationElementWobble.create(0,10,0.2,25));
 
         final EXOAnimationQueue queue = new EXOAnimationQueue();
         queue.generateWithCollection(collection,imgLogo);

@@ -30,7 +30,7 @@ class EXOAnimationState {
         return ret;
     }
 
-    public void combine(EXOAnimationState second)
+    public EXOAnimationState combine(EXOAnimationState second)
     {
         this.scaleX *= second.scaleX;
         this.scaleY *= second.scaleY;
@@ -40,9 +40,40 @@ class EXOAnimationState {
         this.alpha *= second.alpha;
         this.sheerX += second.sheerX;
         this.sheerY += second.sheerY;
+        return this;
     }
 
+    public EXOAnimationState fadeCurve(double between0and1, EXOAnimationCurveGetter curve)
+    {
+        if (curve != null)
+        {
+            double val = curve.getInfluence(between0and1);
+            this.scaleX = (this.scaleX-1.0)*val+1.0;
+            this.scaleY = (this.scaleY-1.0)*val+1.0;
+            this.posX *= val;
+            this.posY *= val;
+            this.rotation *= val;
+            this.alpha *= val;
+            this.sheerX *= val;
+            this.sheerY *= val;
+        }
+        return this;
+    }
 }
+
+interface EXOAnimationCurveGetter
+{
+    double getInfluence(double t);
+}
+
+class EXOAnimationCurveSin implements EXOAnimationCurveGetter
+{
+    @Override
+    public double getInfluence(double t) {
+        return Math.sin(t*Math.PI); // fades from 0 to 1 and back
+    }
+}
+
 
 class EXOAnimationElement implements AnimStateGetter
 {
@@ -55,12 +86,19 @@ class EXOAnimationElement implements AnimStateGetter
     double startTime;
     double duration;
     ElementType elementType;
+    EXOAnimationCurveGetter fadeCurve;
 
     EXOAnimationElement()
     {
         elementType = ElementType.pure;
         startTime = 0.0;
         duration = 0.0;
+    }
+
+    public EXOAnimationElement appendCurve(EXOAnimationCurveGetter curve)
+    {
+        fadeCurve = curve;
+        return this;
     }
 
     @Override
@@ -72,7 +110,7 @@ class EXOAnimationElement implements AnimStateGetter
     public EXOAnimationState getStateForGlobalTime(double time, EXOImageView image)
     {
         if (time >= startTime && time < startTime + duration)
-            return stateAtTime(time-startTime,image);
+            return stateAtTime(time-startTime,image).fadeCurve((time-startTime)/duration,fadeCurve);
         return null;
     }
 }
@@ -93,7 +131,7 @@ class EXOAnimationElementSpline extends EXOAnimationElement implements Spline.Ca
 
         ret.linearSpline.clear();
         Spline.doCubicHermiteSpline(points, ret.fps, ret);
-        ret.setSplineDuration((float) duration);
+        ret.setSplineDuration((float) ret.duration);
 
         return ret;
     } 
@@ -177,7 +215,7 @@ class EXOAnimationElementWobble extends EXOAnimationElement
 
 class EXOAnimationCollection
 {
-    ArrayList<EXOAnimationElement> elements = new ArrayList();
+    ArrayList<EXOAnimationElement> elements = new ArrayList<EXOAnimationElement>();
 
     void addElement(EXOAnimationElement element)
     {
@@ -221,11 +259,11 @@ class EXOAnimationCollection
 
         animationSet.addAnimation(scaleAnimation);
         animationSet.addAnimation(moveAnimation);
-
+/*
         animationSet.setFillAfter(true);
         animationSet.setFillBefore(true);
         animationSet.setFillEnabled(true);
-
+*/
         return animationSet;
     }
 
