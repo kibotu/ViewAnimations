@@ -1,7 +1,6 @@
 package sandbox.android.animation;
 
 import android.content.Context;
-import android.graphics.Canvas;
 import android.util.AttributeSet;
 import android.view.animation.Transformation;
 import android.widget.ImageView;

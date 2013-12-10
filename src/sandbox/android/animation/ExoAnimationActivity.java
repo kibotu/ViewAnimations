@@ -61,8 +61,7 @@ public class ExoAnimationActivity extends Activity {
     }
 
 
-    public void runAnimation(EXOImageView view,EXOAnimationCollection collection)
-    {
+    public void runAnimation(EXOImageView view, EXOAnimationCollection collection) {
         final EXOAnimationQueue queue = new EXOAnimationQueue();
         queue.fps = 1.0 / 2.0;
         queue.generateWithCollection(collection, view);
@@ -105,8 +104,8 @@ public class ExoAnimationActivity extends Activity {
             points.add(point);
         }
 
-        runAnimation(blue,EXOAnimationCollection.create().addAnimation(EXOAnimationElementRotate.create(0,80,16)).addAnimation(EXOAnimationElementSpline.create(0,80, points)));
-        runAnimation(ray,EXOAnimationCollection.create().addAnimation(EXOAnimationElementRotate.create(0,80,16)));
+        runAnimation(blue, EXOAnimationCollection.create().addAnimation(EXOAnimationElementRotate.create(0, 80, 16)).addAnimation(EXOAnimationElementSpline.create(0, 80, points)));
+        runAnimation(ray, EXOAnimationCollection.create().addAnimation(EXOAnimationElementRotate.create(0, 80, 16)));
     }
 
     public EXOImageView addImage(final int x, final int y, final int resourceId, final Scale scale) {
@@ -142,9 +141,9 @@ public class ExoAnimationActivity extends Activity {
             points.add(point);
         }
 
-        collection.addElement(EXOAnimationElementSpline.create(0,10,points));
-        collection.addElement(EXOAnimationElementWobble.create(5,10,0.5,5));
-        collection.addElement(EXOAnimationElementWobble.create(0,10,0.2,25));
+        collection.addElement(EXOAnimationElementSpline.create(0, 10, points));
+        collection.addElement(EXOAnimationElementWobble.create(5, 10, 0.5, 5));
+        collection.addElement(EXOAnimationElementWobble.create(0, 10, 0.2, 25));
 
         final EXOAnimationQueue queue = new EXOAnimationQueue();
         queue.generateWithCollection(collection, imgLogo);
