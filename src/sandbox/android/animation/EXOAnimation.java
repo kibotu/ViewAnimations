@@ -289,15 +289,24 @@ class EXOAnimationCollection {
         animationSet.setDuration((long) ((time2 - time1) * 1000.0));
         animationSet.setInterpolator(new LinearInterpolator());
 
-        animationSet.addAnimation(scaleAnimation);
-        animationSet.addAnimation(moveAnimation);
-        animationSet.addAnimation(rotateAnimation);
+        if (!(eps(state1.scaleX, 1.0) && eps(state2.scaleX, 1.0) && eps(state1.scaleY, 1.0) && eps(state2.scaleY, 1.0)))
+            animationSet.addAnimation(scaleAnimation);
+
+        if (!(eps(state1.posX, 0.0) && eps(state2.posX, 0.0) && eps(state1.posY, 0.0) && eps(state2.posY, 0.0)))
+            animationSet.addAnimation(moveAnimation);
+
+        if (!(eps(state1.rotation, 0.0)))
+            animationSet.addAnimation(rotateAnimation);
 /*
         animationSet.setFillAfter(true);
         animationSet.setFillBefore(true);
         animationSet.setFillEnabled(true);
 */
         return animationSet;
+    }
+
+    private boolean eps(final double val1, final double val2) {
+        return Math.abs(val2 - val1) < 0.01;
     }
 
     ArrayList<Animation> generateWholeAnimation(double timeDelta, EXOImageView image) {
