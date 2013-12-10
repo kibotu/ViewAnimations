@@ -295,7 +295,7 @@ class EXOAnimationCollection {
         if (!(eps(state1.posX, 0.0) && eps(state2.posX, 0.0) && eps(state1.posY, 0.0) && eps(state2.posY, 0.0)))
             animationSet.addAnimation(moveAnimation);
 
-        if (!(eps(state1.rotation, 0.0)))
+        if (!(eps(state1.rotation, 0.0) && eps(state2.rotation, 0.0)))
             animationSet.addAnimation(rotateAnimation);
 /*
         animationSet.setFillAfter(true);
