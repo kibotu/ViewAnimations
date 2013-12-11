@@ -162,7 +162,10 @@ class EXOAnimationElement implements AnimStateGetter,AnimStateGetterGlobal {
         repeat,
         sequence,
         wiggle,
-        blink
+        blink,
+        fadeIn,
+        fadeOut,
+        fadeInOut
     }
 
     protected double startTime;
@@ -270,7 +273,7 @@ class EXOAnimationGenerator extends EXOAnimationElement
         state.posY = screen.scaleY(state.posY);
     }
 
-    Animation generateAnimationFromTimeToTime(double time1, double time2, EXOImageView image, double preDelay)
+    Animation generateAnimationFromTimeToTime(double time1, double time2, EXOImageView image)
     {
         EXOAnimationState state1 = getStateForGlobalTime(time1, image);
         EXOAnimationState state2 = getStateForGlobalTime(time2, image);
@@ -278,36 +281,44 @@ class EXOAnimationGenerator extends EXOAnimationElement
         finalizeState(state1, image);
         finalizeState(state2, image);
 
-
         AnimationSet animationSet = new AnimationSet(true);
         animationSet.setDuration((long) ((time2 - time1) * 1000.0));
         animationSet.setInterpolator(new LinearInterpolator());
 
-        if (!eps(preDelay,0.0))
-            animationSet.setStartOffset((long) (preDelay * 1000.0));
-
+        boolean addedOne = false;
         if (!(eps(state1.scaleX, 1.0) && eps(state2.scaleX, 1.0) && eps(state1.scaleY, 1.0) && eps(state2.scaleY, 1.0)))
         {
             Animation scaleAnimation = new ScaleAnimation((float) state1.scaleX, (float) state2.scaleX, (float) state1.scaleY, (float) state2.scaleY, Animation.RELATIVE_TO_SELF, (float)image.anchorX, Animation.RELATIVE_TO_SELF, (float)image.anchorY);
             animationSet.addAnimation(scaleAnimation);
+            addedOne = true;
         }
 
         if (!(eps(state1.rotation, 0.0) && eps(state2.rotation, 0.0)))
         {
             Animation rotateAnimation = new RotateAnimation((float) state1.rotation, (float) state2.rotation, Animation.RELATIVE_TO_SELF, (float)image.anchorX, Animation.RELATIVE_TO_SELF, (float)image.anchorY);
             animationSet.addAnimation(rotateAnimation);
+            addedOne = true;
         }
 
         if (!(eps(state1.posX, 0.0) && eps(state2.posX, 0.0) && eps(state1.posY, 0.0) && eps(state2.posY, 0.0)))
         {
             Animation moveAnimation = new TranslateAnimation((float) state1.posX, (float) state2.posX, (float) state1.posY, (float) state2.posY);
             animationSet.addAnimation(moveAnimation);
+            addedOne = true;
         }
 
         if (!(eps(state1.alpha,1.0) && eps(state2.alpha,1.0)))
         {
             Animation alphaAnimation = new AlphaAnimation((float)state1.alpha,(float)state2.alpha);
             animationSet.addAnimation(alphaAnimation);
+            addedOne = true;
+        }
+
+        if (!addedOne)
+        {
+            // for empty stuffs
+            Animation tempAnimation = new Animation(){};
+            animationSet.addAnimation(tempAnimation);
         }
 
         animationSet.setFillAfter(true);
@@ -348,11 +359,20 @@ class EXOAnimationGenerator extends EXOAnimationElement
         }
 
         ArrayList<Animation> ret = new ArrayList<Animation>();
-        boolean first = true;
+
+        if (!eps(this.preDelay,0.0))
+        {
+            Animation tempAnimation = new Animation(){};
+            AnimationSet animationSet = new AnimationSet(true);
+            animationSet.setDuration((long) (this.preDelay * 1000.0));
+            animationSet.setInterpolator(new LinearInterpolator());
+            animationSet.addAnimation(tempAnimation);
+            ret.add(animationSet);
+        }
+
         for (double time = startTime; time < endTime; time += timeDelta) {
-            Animation anim = generateAnimationFromTimeToTime(time, time + timeDelta, image, first ? this.preDelay : 0.0);
+            Animation anim = generateAnimationFromTimeToTime(time, time + timeDelta, image);
             ret.add(anim);
-            first = false;
         }
 
         return ret;
@@ -371,6 +391,41 @@ class EXOAnimationGenerator extends EXOAnimationElement
         EXOAnimationGenerator ret = new EXOAnimationGenerator();
         ret.elements = new ArrayList<EXOAnimationElement>(elements); // the elements itself arent cloned
         ret.preDelay = preDelay;
+        return ret;
+    }
+}
+
+class EXOAnimationElementMove extends EXOAnimationElement
+{
+
+    double fromX;
+    double fromY;
+    double toX;
+    double toY;
+
+    EXOAnimationElementMove()
+    {
+        elementType = ElementType.wiggle;
+    }
+
+    static EXOAnimationElementMove create(double startTime, double endTime, double fromX, double fromY, double toX, double toY)
+    {
+        EXOAnimationElementMove ret = new EXOAnimationElementMove();
+        ret.startTime = startTime;
+        ret.duration = endTime - startTime;
+        ret.fromX = fromX;
+        ret.fromY = fromY;
+        ret.toX = toX;
+        ret.toY = toY;
+        return ret;
+    }
+
+    @Override
+    public EXOAnimationState stateAtTime(double time, EXOImageView image)
+    {
+        EXOAnimationState ret = EXOAnimationState.identity();
+        ret.posX = (toX - fromX) * time / duration + fromX;
+        ret.posY = (toY - fromY) * time / duration + fromY;
         return ret;
     }
 }
@@ -528,6 +583,75 @@ class EXOAnimationElementBlink extends EXOAnimationElement {
     public EXOAnimationState stateAtTime(double time, EXOImageView image) {
         EXOAnimationState ret = EXOAnimationState.identity();
         ret.alpha = 1.0 + Math.cos(time / duration * Math.PI * 2.0) * factor * 0.5 - factor * 0.5;
+        return ret;
+    }
+}
+
+class EXOAnimationElementFadeOut extends EXOAnimationElement {
+
+    double factor;
+
+    EXOAnimationElementFadeOut() {
+        elementType = ElementType.fadeOut;
+    }
+
+    static EXOAnimationElementFadeOut create(double startTime, double endTime) {
+        EXOAnimationElementFadeOut ret = new EXOAnimationElementFadeOut();
+        ret.startTime = startTime;
+        ret.duration = endTime - startTime;
+        return ret;
+    }
+
+    @Override
+    public EXOAnimationState stateAtTime(double time, EXOImageView image) {
+        EXOAnimationState ret = EXOAnimationState.identity();
+        ret.alpha = 1.0 - time / duration;
+        return ret;
+    }
+}
+
+class EXOAnimationElementFadeIn extends EXOAnimationElement {
+
+    double factor;
+
+    EXOAnimationElementFadeIn() {
+        elementType = ElementType.fadeIn;
+    }
+
+    static EXOAnimationElementFadeIn create(double startTime, double endTime) {
+        EXOAnimationElementFadeIn ret = new EXOAnimationElementFadeIn();
+        ret.startTime = startTime;
+        ret.duration = endTime - startTime;
+        return ret;
+    }
+
+    @Override
+    public EXOAnimationState stateAtTime(double time, EXOImageView image) {
+        EXOAnimationState ret = EXOAnimationState.identity();
+        ret.alpha = time / duration;
+        return ret;
+    }
+}
+
+class EXOAnimationElementFadeInOut extends EXOAnimationElement {
+
+    double factor;
+
+    EXOAnimationElementFadeInOut() {
+        elementType = ElementType.fadeInOut;
+    }
+
+    static EXOAnimationElementFadeInOut create(double startTime, double endTime) {
+        EXOAnimationElementFadeInOut ret = new EXOAnimationElementFadeInOut();
+        ret.startTime = startTime;
+        ret.duration = endTime - startTime;
+        return ret;
+    }
+
+    @Override
+    public EXOAnimationState stateAtTime(double time, EXOImageView image) {
+        EXOAnimationState ret = EXOAnimationState.identity();
+        ret.alpha = Math.sin(time / duration * Math.PI);
         return ret;
     }
 }
