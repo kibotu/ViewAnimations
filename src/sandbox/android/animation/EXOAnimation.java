@@ -10,6 +10,12 @@ interface AnimStateGetter {
     public EXOAnimationState stateAtTime(double time, EXOImageView image);
 }
 
+interface AnimStateGetterGlobal
+{
+    public EXOAnimationState getStateForGlobalTime(double time, EXOImageView image);
+}
+
+
 class EXOAnimationState {
     double scaleX, scaleY;
     double posX, posY;
@@ -144,31 +150,44 @@ enum EXOAnimationScreenConfig
     }
 }
 
-class EXOAnimationElement implements AnimStateGetter {
-    enum ElementType {
+class EXOAnimationElement implements AnimStateGetter,AnimStateGetterGlobal {
+
+    enum ElementType
+    {
         pure,
         spline,
         wobble,
         rotate,
         repeat,
         sequence,
-        wiggle
+        wiggle,
+        blink
     }
 
-    double startTime;
-    double duration;
+    protected double startTime;
+    protected double duration;
+    protected double overallDuration;
     ElementType elementType;
     EXOAnimationCurveGetter fadeCurve;
+
+    // for sequenced stuff (everything is a sequenced container and can hold more animations than one)
+    ArrayList<EXOAnimationElement> elements = new ArrayList<EXOAnimationElement>();
 
     EXOAnimationElement() {
         elementType = ElementType.pure;
         startTime = 0.0;
         duration = 0.0;
+        overallDuration = 0.0;
     }
 
-    public EXOAnimationElement appendCurve(EXOAnimationCurveGetter curve) {
+    public EXOAnimationElement applyCurve(EXOAnimationCurveGetter curve) {
         fadeCurve = curve;
         return this;
+    }
+
+    double getDuration()
+    {
+        return Math.max(overallDuration,duration);
     }
 
     @Override
@@ -176,10 +195,52 @@ class EXOAnimationElement implements AnimStateGetter {
         return EXOAnimationState.identity();
     }
 
+    @Override
     public EXOAnimationState getStateForGlobalTime(double time, EXOImageView image) {
+
+        EXOAnimationState ret = null;
         if (time >= startTime && time < startTime + duration)
-            return stateAtTime(time - startTime, image).fadeCurve((time - startTime) / duration, fadeCurve);
-        return null;
+        {
+            ret = stateAtTime(time - startTime,image).fadeCurve((time - startTime) / duration, fadeCurve);
+        }
+        if (time >= startTime && time < startTime + getDuration())
+        {
+            for (int i = 0; i < elements.size(); ++i)
+            {
+                EXOAnimationElement element = elements.get(i);
+
+                EXOAnimationState state = element.getStateForGlobalTime(time, image);
+                if (state != null)
+                {
+                    if (ret == null)
+                        ret = state;
+                    else
+                        ret.combine(state);
+                }
+            }
+        }
+        return ret;
+    }
+
+    public EXOAnimationElement appendAnimation(EXOAnimationElement element)
+    {
+        element.startTime = this.startTime + this.getDuration();
+        this.elements.add(element);
+        double elementLength    = element.startTime + element.getDuration();
+        double thisLength       = this.startTime + this.getDuration();
+        if (elementLength > thisLength)
+            this.overallDuration = elementLength - this.startTime;
+        return this;
+    }
+
+    public EXOAnimationElement addAnimation(EXOAnimationElement element)
+    {
+        this.elements.add(element);
+        double elementLength    = element.startTime + element.getDuration();
+        double thisLength       = this.startTime + this.getDuration();
+        if (elementLength > thisLength)
+            this.overallDuration = elementLength - this.startTime;
+        return this;
     }
 }
 
@@ -304,54 +365,35 @@ class EXOAnimationElementRepeat extends EXOAnimationElement {
         EXOAnimationElementRepeat ret = new EXOAnimationElementRepeat();
         ret.repeats = repeats;
         ret.startTime = toRepeat.startTime;
-        ret.duration = toRepeat.duration * repeats;
+        ret.duration = toRepeat.getDuration() * repeats;
         ret.anim = toRepeat;
         return ret;
     }
 
     @Override
     public EXOAnimationState stateAtTime(double time, EXOImageView image) {
-        return anim.stateAtTime(time % anim.duration, image);
+        return anim.getStateForGlobalTime(startTime + (time % anim.getDuration()), image);
     }
 }
 
-class EXOAnimationElementSequence extends EXOAnimationElement {
+class EXOAnimationElementBlink extends EXOAnimationElement {
 
-    ArrayList<EXOAnimationElement> elements = new ArrayList<EXOAnimationElement>();
-    double currentEndPoint;
-
-    EXOAnimationElementSequence() {
-        elementType = ElementType.sequence;
+    EXOAnimationElementBlink() {
+        elementType = ElementType.blink;
     }
 
-    static EXOAnimationElementSequence create() {
-        EXOAnimationElementSequence ret = new EXOAnimationElementSequence();
-        ret.currentEndPoint = 0.0;
+    static EXOAnimationElementBlink create(double startTime, double endTime) {
+        EXOAnimationElementBlink ret = new EXOAnimationElementBlink();
+        ret.startTime = startTime;
+        ret.duration = endTime - startTime;
+
         return ret;
-    }
-
-    void appendAnimation(EXOAnimationElement element)
-    {
-        element.startTime = currentEndPoint;
-        currentEndPoint += element.duration;
-        elements.add(element);
-    }
-
-    void putAnimation(EXOAnimationElement element)
-    {
-        elements.add(element);
     }
 
     @Override
     public EXOAnimationState stateAtTime(double time, EXOImageView image) {
         EXOAnimationState ret = EXOAnimationState.identity();
-        for (int i = 0; i < elements.size(); ++i) {
-            EXOAnimationElement element = elements.get(i);
-
-            EXOAnimationState state = element.getStateForGlobalTime(time, image);
-            if (state != null)
-                ret.combine(state);
-        }
+        ret.alpha = Math.cos(time / duration * Math.PI) * 0.5+0.5;
         return ret;
     }
 }
@@ -455,24 +497,37 @@ class EXOAnimationCollection {
         finalizeState(state1, image);
         finalizeState(state2, image);
 
-        Animation scaleAnimation = new ScaleAnimation((float) state1.scaleX, (float) state2.scaleX, (float) state1.scaleY, (float) state2.scaleY, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
-        Animation moveAnimation = new TranslateAnimation((float) state1.posX, (float) state2.posX, (float) state1.posY, (float) state2.posY);
-        Animation rotateAnimation = new RotateAnimation((float) state1.rotation, (float) state2.rotation, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
 
         AnimationSet animationSet = new AnimationSet(true);
         animationSet.setDuration((long) ((time2 - time1) * 1000.0));
-        if (!eps(preDelay,0.0))
-            animationSet.setStartOffset((long) (preDelay * 1000.0));
         animationSet.setInterpolator(new LinearInterpolator());
 
+        if (!eps(preDelay,0.0))
+            animationSet.setStartOffset((long) (preDelay * 1000.0));
+
         if (!(eps(state1.scaleX, 1.0) && eps(state2.scaleX, 1.0) && eps(state1.scaleY, 1.0) && eps(state2.scaleY, 1.0)))
+        {
+            Animation scaleAnimation = new ScaleAnimation((float) state1.scaleX, (float) state2.scaleX, (float) state1.scaleY, (float) state2.scaleY, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
             animationSet.addAnimation(scaleAnimation);
+        }
 
         if (!(eps(state1.rotation, 0.0) && eps(state2.rotation, 0.0)))
+        {
+            Animation rotateAnimation = new RotateAnimation((float) state1.rotation, (float) state2.rotation, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
             animationSet.addAnimation(rotateAnimation);
+        }
 
         if (!(eps(state1.posX, 0.0) && eps(state2.posX, 0.0) && eps(state1.posY, 0.0) && eps(state2.posY, 0.0)))
+        {
+            Animation moveAnimation = new TranslateAnimation((float) state1.posX, (float) state2.posX, (float) state1.posY, (float) state2.posY);
             animationSet.addAnimation(moveAnimation);
+        }
+
+        if (!(eps(state1.alpha,1.0) && eps(state2.alpha,1.0)))
+        {
+            Animation alphaAnimation = new AlphaAnimation((float)state1.alpha,(float)state2.alpha);
+            animationSet.addAnimation(alphaAnimation);
+        }
 
         animationSet.setFillAfter(true);
         animationSet.setFillBefore(true);
@@ -491,7 +546,7 @@ class EXOAnimationCollection {
 
         for (int i = 0; i < elements.size(); ++i) {
             EXOAnimationElement element = elements.get(i);
-            double endHere = element.startTime + element.duration;
+            double endHere = element.startTime + element.getDuration();
 
             if (endHere > endTime) endTime = endHere;
         }
@@ -509,8 +564,18 @@ class EXOAnimationCollection {
 
     EXOAnimationCollection waitBefore(double time)
     {
-        this.preDelay = time;
-        return this;
+        EXOAnimationCollection cloned = this.clone();
+        cloned.preDelay = time;
+        return cloned;
+    }
+
+    @Override
+    public EXOAnimationCollection clone()
+    {
+        EXOAnimationCollection ret = new EXOAnimationCollection();
+        ret.elements = new ArrayList<EXOAnimationElement>(elements); // the elements itself arent cloned
+        ret.preDelay = preDelay;
+        return ret;
     }
 }
 
