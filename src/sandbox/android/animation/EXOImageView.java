@@ -13,7 +13,9 @@ import android.widget.ImageView;
  * To change this template use File | Settings | File Templates.
  */
 public class EXOImageView extends ImageView {
-    Transformation additionalTransform;
+
+    double anchorX = 0.5;
+    double anchorY = 0.5;
 
     public EXOImageView(final Context context, final AttributeSet attrs, final int defStyle) {
         super(context, attrs, defStyle);

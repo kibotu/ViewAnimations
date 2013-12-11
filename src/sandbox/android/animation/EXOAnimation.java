@@ -135,6 +135,7 @@ enum EXOAnimationScreenConfig
     NO_SCALING(1, 1);
 
     private final double scaleX, scaleY;
+    private final double yAspectFix = 1.0;
 
     private EXOAnimationScreenConfig(final double scaleX, final double scaleY) {
         this.scaleX = scaleX;
@@ -146,7 +147,7 @@ enum EXOAnimationScreenConfig
     }
 
     public double scaleY(final double y) {
-        return y * scaleY / x768.scaleY;
+        return y * scaleY / x768.scaleY * yAspectFix;
     }
 }
 
@@ -169,8 +170,6 @@ class EXOAnimationElement implements AnimStateGetter,AnimStateGetterGlobal {
     protected double overallDuration;
     ElementType elementType;
     EXOAnimationCurveGetter fadeCurve;
-
-    // for sequenced stuff (everything is a sequenced container and can hold more animations than one)
     ArrayList<EXOAnimationElement> elements = new ArrayList<EXOAnimationElement>();
 
     EXOAnimationElement() {
@@ -193,6 +192,27 @@ class EXOAnimationElement implements AnimStateGetter,AnimStateGetterGlobal {
     @Override
     public EXOAnimationState stateAtTime(double time, EXOImageView image) {
         return EXOAnimationState.identity();
+    }
+
+    public EXOAnimationElement appendAnimation(EXOAnimationElement element)
+    {
+        element.startTime = this.startTime + this.getDuration();
+        this.elements.add(element);
+        double elementLength    = element.startTime + element.getDuration();
+        double thisLength       = this.startTime + this.getDuration();
+        if (elementLength > thisLength)
+            this.overallDuration = elementLength - this.startTime;
+        return this;
+    }
+
+    public EXOAnimationElement addAnimation(EXOAnimationElement element)
+    {
+        this.elements.add(element);
+        double elementLength    = element.startTime + element.getDuration();
+        double thisLength       = this.startTime + this.getDuration();
+        if (elementLength > thisLength)
+            this.overallDuration = elementLength - this.startTime;
+        return this;
     }
 
     @Override
@@ -221,26 +241,137 @@ class EXOAnimationElement implements AnimStateGetter,AnimStateGetterGlobal {
         }
         return ret;
     }
+}
 
-    public EXOAnimationElement appendAnimation(EXOAnimationElement element)
+class EXOAnimationGenerator extends EXOAnimationElement
+{
+    public static EXOAnimationScreenConfig screen = EXOAnimationScreenConfig.NO_SCALING;
+    double preDelay = 0.0;
+
+    static EXOAnimationGenerator create()
     {
-        element.startTime = this.startTime + this.getDuration();
-        this.elements.add(element);
-        double elementLength    = element.startTime + element.getDuration();
-        double thisLength       = this.startTime + this.getDuration();
-        if (elementLength > thisLength)
-            this.overallDuration = elementLength - this.startTime;
-        return this;
+        EXOAnimationGenerator ret = new EXOAnimationGenerator();
+        return ret;
     }
 
-    public EXOAnimationElement addAnimation(EXOAnimationElement element)
+    static EXOAnimationGenerator create(EXOAnimationElement initialAnimation)
     {
-        this.elements.add(element);
-        double elementLength    = element.startTime + element.getDuration();
-        double thisLength       = this.startTime + this.getDuration();
-        if (elementLength > thisLength)
-            this.overallDuration = elementLength - this.startTime;
-        return this;
+        EXOAnimationGenerator ret = EXOAnimationGenerator.create();
+        ret.addAnimation(initialAnimation);
+        return ret;
+    }
+
+    void finalizeState(EXOAnimationState state, EXOImageView image)
+    {
+        //state.posX += state.scaleX * (1.0 - image.getWidth()) * 0.5;
+        //state.posY += state.scaleY * (1.0 - image.getHeight()) * 0.5;
+
+        state.posX = screen.scaleX(state.posX);
+        state.posY = screen.scaleY(state.posY);
+    }
+
+    Animation generateAnimationFromTimeToTime(double time1, double time2, EXOImageView image, double preDelay)
+    {
+        EXOAnimationState state1 = getStateForGlobalTime(time1, image);
+        EXOAnimationState state2 = getStateForGlobalTime(time2, image);
+
+        finalizeState(state1, image);
+        finalizeState(state2, image);
+
+
+        AnimationSet animationSet = new AnimationSet(true);
+        animationSet.setDuration((long) ((time2 - time1) * 1000.0));
+        animationSet.setInterpolator(new LinearInterpolator());
+
+        if (!eps(preDelay,0.0))
+            animationSet.setStartOffset((long) (preDelay * 1000.0));
+
+        if (!(eps(state1.scaleX, 1.0) && eps(state2.scaleX, 1.0) && eps(state1.scaleY, 1.0) && eps(state2.scaleY, 1.0)))
+        {
+            Animation scaleAnimation = new ScaleAnimation((float) state1.scaleX, (float) state2.scaleX, (float) state1.scaleY, (float) state2.scaleY, Animation.RELATIVE_TO_SELF, (float)image.anchorX, Animation.RELATIVE_TO_SELF, (float)image.anchorY);
+            animationSet.addAnimation(scaleAnimation);
+        }
+
+        if (!(eps(state1.rotation, 0.0) && eps(state2.rotation, 0.0)))
+        {
+            Animation rotateAnimation = new RotateAnimation((float) state1.rotation, (float) state2.rotation, Animation.RELATIVE_TO_SELF, (float)image.anchorX, Animation.RELATIVE_TO_SELF, (float)image.anchorY);
+            animationSet.addAnimation(rotateAnimation);
+        }
+
+        if (!(eps(state1.posX, 0.0) && eps(state2.posX, 0.0) && eps(state1.posY, 0.0) && eps(state2.posY, 0.0)))
+        {
+            Animation moveAnimation = new TranslateAnimation((float) state1.posX, (float) state2.posX, (float) state1.posY, (float) state2.posY);
+            animationSet.addAnimation(moveAnimation);
+        }
+
+        if (!(eps(state1.alpha,1.0) && eps(state2.alpha,1.0)))
+        {
+            Animation alphaAnimation = new AlphaAnimation((float)state1.alpha,(float)state2.alpha);
+            animationSet.addAnimation(alphaAnimation);
+        }
+
+        animationSet.setFillAfter(true);
+        animationSet.setFillBefore(true);
+        animationSet.setFillEnabled(true);
+        return animationSet;
+    }
+
+    private boolean eps(final double val1, final double val2) {
+        return Math.abs(val2 - val1) < 0.01;
+    }
+
+    @Override
+    public EXOAnimationState getStateForGlobalTime(double time, EXOImageView image)
+    {
+        EXOAnimationState ret = EXOAnimationState.identity();
+        for (int i = 0; i < elements.size(); ++i)
+        {
+            EXOAnimationElement element = elements.get(i);
+
+            EXOAnimationState state = element.getStateForGlobalTime(time, image);
+            if (state != null)
+                ret.combine(state);
+        }
+        return ret;
+    }
+
+    ArrayList<Animation> generateWholeAnimation(double timeDelta, EXOImageView image) {
+
+        double startTime = 0.0;
+        double endTime = 0.0;
+
+        for (int i = 0; i < elements.size(); ++i) {
+            EXOAnimationElement element = elements.get(i);
+            double endHere = element.startTime + element.getDuration();
+
+            if (endHere > endTime) endTime = endHere;
+        }
+
+        ArrayList<Animation> ret = new ArrayList<Animation>();
+        boolean first = true;
+        for (double time = startTime; time < endTime; time += timeDelta) {
+            Animation anim = generateAnimationFromTimeToTime(time, time + timeDelta, image, first ? this.preDelay : 0.0);
+            ret.add(anim);
+            first = false;
+        }
+
+        return ret;
+    }
+
+    EXOAnimationGenerator waitBefore(double time)
+    {
+        EXOAnimationGenerator cloned = this.clone();
+        cloned.preDelay = time;
+        return cloned;
+    }
+
+    @Override
+    public EXOAnimationGenerator clone()
+    {
+        EXOAnimationGenerator ret = new EXOAnimationGenerator();
+        ret.elements = new ArrayList<EXOAnimationElement>(elements); // the elements itself arent cloned
+        ret.preDelay = preDelay;
+        return ret;
     }
 }
 
@@ -372,20 +503,23 @@ class EXOAnimationElementRepeat extends EXOAnimationElement {
 
     @Override
     public EXOAnimationState stateAtTime(double time, EXOImageView image) {
-        return anim.getStateForGlobalTime(startTime + (time % anim.getDuration()), image);
+        return anim.getStateForGlobalTime(startTime + (time % anim.getDuration()), image).fadeCurve((time - startTime) / duration, fadeCurve);
     }
 }
 
 class EXOAnimationElementBlink extends EXOAnimationElement {
 
+    double factor;
+
     EXOAnimationElementBlink() {
         elementType = ElementType.blink;
     }
 
-    static EXOAnimationElementBlink create(double startTime, double endTime) {
+    static EXOAnimationElementBlink create(double startTime, double endTime, double factor) {
         EXOAnimationElementBlink ret = new EXOAnimationElementBlink();
         ret.startTime = startTime;
         ret.duration = endTime - startTime;
+        ret.factor = factor;
 
         return ret;
     }
@@ -393,7 +527,7 @@ class EXOAnimationElementBlink extends EXOAnimationElement {
     @Override
     public EXOAnimationState stateAtTime(double time, EXOImageView image) {
         EXOAnimationState ret = EXOAnimationState.identity();
-        ret.alpha = Math.cos(time / duration * Math.PI) * 0.5+0.5;
+        ret.alpha = 1.0 + Math.cos(time / duration * Math.PI * 2.0) * factor * 0.5 - factor * 0.5;
         return ret;
     }
 }
@@ -452,133 +586,6 @@ class EXOAnimationElementJump extends EXOAnimationElement {
     }
 }
 
-class EXOAnimationCollection {
-    ArrayList<EXOAnimationElement> elements = new ArrayList<EXOAnimationElement>();
-    public static EXOAnimationScreenConfig screen = EXOAnimationScreenConfig.NO_SCALING;
-    double preDelay = 0.0;
-
-    public static EXOAnimationCollection create() {
-        return new EXOAnimationCollection();
-    }
-
-    public EXOAnimationCollection addAnimation(EXOAnimationElement element) {
-        addElement(element);
-        return this;
-    }
-
-    void addElement(EXOAnimationElement element) {
-        elements.add(element);
-    }
-
-    EXOAnimationState getCombinedStateAtTime(double time, EXOImageView image) {
-        EXOAnimationState ret = EXOAnimationState.identity();
-        for (int i = 0; i < elements.size(); ++i) {
-            EXOAnimationElement element = elements.get(i);
-
-            EXOAnimationState state = element.getStateForGlobalTime(time, image);
-            if (state != null)
-                ret.combine(state);
-        }
-        return ret;
-    }
-
-    void finalizeState(EXOAnimationState state, EXOImageView image) {
-        //state.posX += state.scaleX * (1.0 - image.getWidth()) * 0.5;
-        //state.posY += state.scaleY * (1.0 - image.getHeight()) * 0.5;
-
-        state.posX = screen.scaleX(state.posX);
-        state.posY = screen.scaleY(state.posY);
-    }
-
-    Animation generateAnimationFromTimeToTime(double time1, double time2, EXOImageView image, double preDelay) {
-        EXOAnimationState state1 = getCombinedStateAtTime(time1, image);
-        EXOAnimationState state2 = getCombinedStateAtTime(time2, image);
-
-        finalizeState(state1, image);
-        finalizeState(state2, image);
-
-
-        AnimationSet animationSet = new AnimationSet(true);
-        animationSet.setDuration((long) ((time2 - time1) * 1000.0));
-        animationSet.setInterpolator(new LinearInterpolator());
-
-        if (!eps(preDelay,0.0))
-            animationSet.setStartOffset((long) (preDelay * 1000.0));
-
-        if (!(eps(state1.scaleX, 1.0) && eps(state2.scaleX, 1.0) && eps(state1.scaleY, 1.0) && eps(state2.scaleY, 1.0)))
-        {
-            Animation scaleAnimation = new ScaleAnimation((float) state1.scaleX, (float) state2.scaleX, (float) state1.scaleY, (float) state2.scaleY, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
-            animationSet.addAnimation(scaleAnimation);
-        }
-
-        if (!(eps(state1.rotation, 0.0) && eps(state2.rotation, 0.0)))
-        {
-            Animation rotateAnimation = new RotateAnimation((float) state1.rotation, (float) state2.rotation, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
-            animationSet.addAnimation(rotateAnimation);
-        }
-
-        if (!(eps(state1.posX, 0.0) && eps(state2.posX, 0.0) && eps(state1.posY, 0.0) && eps(state2.posY, 0.0)))
-        {
-            Animation moveAnimation = new TranslateAnimation((float) state1.posX, (float) state2.posX, (float) state1.posY, (float) state2.posY);
-            animationSet.addAnimation(moveAnimation);
-        }
-
-        if (!(eps(state1.alpha,1.0) && eps(state2.alpha,1.0)))
-        {
-            Animation alphaAnimation = new AlphaAnimation((float)state1.alpha,(float)state2.alpha);
-            animationSet.addAnimation(alphaAnimation);
-        }
-
-        animationSet.setFillAfter(true);
-        animationSet.setFillBefore(true);
-        animationSet.setFillEnabled(true);
-        return animationSet;
-    }
-
-    private boolean eps(final double val1, final double val2) {
-        return Math.abs(val2 - val1) < 0.01;
-    }
-
-    ArrayList<Animation> generateWholeAnimation(double timeDelta, EXOImageView image) {
-
-        double startTime = 0.0;
-        double endTime = 0.0;
-
-        for (int i = 0; i < elements.size(); ++i) {
-            EXOAnimationElement element = elements.get(i);
-            double endHere = element.startTime + element.getDuration();
-
-            if (endHere > endTime) endTime = endHere;
-        }
-
-        ArrayList<Animation> ret = new ArrayList<Animation>();
-        boolean first = true;
-        for (double time = startTime; time < endTime; time += timeDelta) {
-            Animation anim = generateAnimationFromTimeToTime(time, time + timeDelta, image, first ? this.preDelay : 0.0);
-            ret.add(anim);
-            first = false;
-        }
-
-        return ret;
-    }
-
-    EXOAnimationCollection waitBefore(double time)
-    {
-        EXOAnimationCollection cloned = this.clone();
-        cloned.preDelay = time;
-        return cloned;
-    }
-
-    @Override
-    public EXOAnimationCollection clone()
-    {
-        EXOAnimationCollection ret = new EXOAnimationCollection();
-        ret.elements = new ArrayList<EXOAnimationElement>(elements); // the elements itself arent cloned
-        ret.preDelay = preDelay;
-        return ret;
-    }
-}
-
 class EXOAnimationQueue implements Animation.AnimationListener {
 
     ArrayList<Animation> animations = new ArrayList<Animation>();
@@ -587,9 +594,9 @@ class EXOAnimationQueue implements Animation.AnimationListener {
     EXOImageView viewToRunOn;
     Animation currentActive;
 
-    void generateWithCollection(EXOAnimationCollection collection, EXOImageView toStartOn, double fps) {
+    void generateWithCollection(EXOAnimationGenerator animation, EXOImageView toStartOn, double fps) {
         viewToRunOn = toStartOn;
-        animations = collection.generateWholeAnimation(1.0 / fps, viewToRunOn);
+        animations = animation.generateWholeAnimation(1.0 / fps, viewToRunOn);
     }
 
     void run() {
