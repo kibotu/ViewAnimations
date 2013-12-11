@@ -67,11 +67,11 @@ public class ExoAnimationActivity extends Activity {
             runAnimation(particle,5.0,generator.waitBefore(Math.random()*2.0));
         }
 
-        EXOImageView green  = addImage(355+90, 576, R.drawable.jelly_green, screen);      // jelly_green 355*576
-        EXOImageView red    = addImage(355+225, 576, R.drawable.jelly_red, screen);        // jelly_red 355*576
-        EXOImageView pink   = addImage(355+150, 576, R.drawable.jelly_pink, screen);       // jelly_pink 355*576
-        EXOImageView blue   = addImage(355+70, 576, R.drawable.jelly_blue, screen);       // jelly_blue 355*576
-        EXOImageView yellow = addImage(355+300, 576, R.drawable.jelly_yellow, screen);     // jelly_yellow 355*576
+        EXOImageView green  = addImage(355+90, 596-30*2, R.drawable.jelly_green, screen);      // jelly_green 355*576
+        EXOImageView red    = addImage(355+225, 596-25*3, R.drawable.jelly_red, screen);        // jelly_red 355*576
+        EXOImageView pink   = addImage(355+150, 596-20*2, R.drawable.jelly_pink, screen);       // jelly_pink 355*576
+        EXOImageView blue   = addImage(355+70, 596, R.drawable.jelly_blue, screen);       // jelly_blue 355*576
+        EXOImageView yellow = addImage(355+300, 596, R.drawable.jelly_yellow, screen);     // jelly_yellow 355*576
         EXOImageView logo   = addImage(294, 268, R.drawable.logo, screen);             // logo 294*268
         EXOImageView kakaoText = addImage(239, 530, R.drawable.speech_ballon, screen);    // speech_ballon 239*530
         EXOImageView tree1 = addImage(51, 564, R.drawable.tree_ol_1, screen);         // tree_ol_1 051*564
