@@ -19,6 +19,7 @@ public class ExoAnimationActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        initialized = false;
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         super.onCreate(savedInstanceState);
@@ -44,7 +45,11 @@ public class ExoAnimationActivity extends Activity {
     /**
      * @see <a href="https://redmine.exozet.com/issues/37448">Export Intro Screen</a>
      */
+    static boolean initialized = false;
     public void createIntroScreenScene() {
+        if (initialized)
+            return;
+        initialized = true;
         EXOAnimationScreenConfig screen = EXOAnimationScreenConfig.x600;
         EXOAnimationGenerator.screen = screen;
 
@@ -73,9 +78,9 @@ public class ExoAnimationActivity extends Activity {
         EXOImageView tree2 = addImage(909, 111, R.drawable.tree_ol_2, screen);        // tree_ol_2 909*111
         EXOImageView tree3 = addImage(728, 0, R.drawable.tree_ol_3, screen);          // tree_ol_3 728*000
         EXOImageView critter1 = addImage(67, 1080, R.drawable.critter_1, screen);        // critter_1 067*1080
+        EXOImageView critter4 = addImage(209, 894, R.drawable.critter_4, screen);        // critter_4 209*894
         EXOImageView critter2 = addImage(435, 1067, R.drawable.critter_2, screen);       // critter_2 435*1067
         EXOImageView critter3 = addImage(845, 1135, R.drawable.critter_3, screen);       // critter_3 845*1135
-        EXOImageView critter4 = addImage(209, 894, R.drawable.critter_4, screen);        // critter_4 209*894
 
         ArrayList<PointF> points = new ArrayList<PointF>(100);
         points.add(new PointF(0, 0));
@@ -123,8 +128,8 @@ public class ExoAnimationActivity extends Activity {
 
     public EXOImageView addImage(final int x, final int y, final int resourceId, final EXOAnimationScreenConfig screen) {
         EXOImageView img = new EXOImageView(this);
-        img.setDrawingCacheEnabled(true);
-        img.setDrawingCacheQuality(EXOImageView.DRAWING_CACHE_QUALITY_LOW);
+        //img.setDrawingCacheEnabled(true);
+        //img.setDrawingCacheQuality(EXOImageView.DRAWING_CACHE_QUALITY_AUTO);
         img.setScaleType(ImageView.ScaleType.FIT_XY); //(correct aspect ratio later)
         img.setImageResource(resourceId);
         RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
