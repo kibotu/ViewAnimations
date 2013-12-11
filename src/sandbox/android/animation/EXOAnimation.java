@@ -250,6 +250,7 @@ class EXOAnimationGenerator extends EXOAnimationElement
 {
     public static EXOAnimationScreenConfig screen = EXOAnimationScreenConfig.NO_SCALING;
     double preDelay = 0.0;
+    double timeScale = 1.0;
 
     static EXOAnimationGenerator create()
     {
@@ -360,18 +361,26 @@ class EXOAnimationGenerator extends EXOAnimationElement
 
         ArrayList<Animation> ret = new ArrayList<Animation>();
 
-        if (!eps(this.preDelay,0.0))
+        if (!eps(this.preDelay*this.timeScale,0.0))
         {
             Animation tempAnimation = new Animation(){};
             AnimationSet animationSet = new AnimationSet(true);
-            animationSet.setDuration((long) (this.preDelay * 1000.0));
+            animationSet.setDuration((long) (this.preDelay * this.timeScale * 1000.0));
             animationSet.setInterpolator(new LinearInterpolator());
             animationSet.addAnimation(tempAnimation);
             ret.add(animationSet);
         }
 
-        for (double time = startTime; time < endTime; time += timeDelta) {
-            Animation anim = generateAnimationFromTimeToTime(time, time + timeDelta, image);
+        double time = startTime * this.timeScale;
+        for (; time < endTime * this.timeScale; time += timeDelta * this.timeScale) {
+            Animation anim = generateAnimationFromTimeToTime(time, time + timeDelta * this.timeScale, image);
+            ret.add(anim);
+        }
+        endTime -= 0.001;// das delta issnen bissl arbitary
+        endTime *= this.timeScale;
+        if (endTime>time)
+        {
+            Animation anim = generateAnimationFromTimeToTime(time, endTime, image);
             ret.add(anim);
         }
 
@@ -634,8 +643,6 @@ class EXOAnimationElementFadeIn extends EXOAnimationElement {
 }
 
 class EXOAnimationElementFadeInOut extends EXOAnimationElement {
-
-    double factor;
 
     EXOAnimationElementFadeInOut() {
         elementType = ElementType.fadeInOut;
