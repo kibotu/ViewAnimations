@@ -461,7 +461,8 @@ class EXOAnimationCollection {
 
         AnimationSet animationSet = new AnimationSet(true);
         animationSet.setDuration((long) ((time2 - time1) * 1000.0));
-        animationSet.setStartOffset((long) (preDelay * 1000.0));
+        if (!eps(preDelay,0.0))
+            animationSet.setStartOffset((long) (preDelay * 1000.0));
         animationSet.setInterpolator(new LinearInterpolator());
 
         if (!(eps(state1.scaleX, 1.0) && eps(state2.scaleX, 1.0) && eps(state1.scaleY, 1.0) && eps(state2.scaleY, 1.0)))
@@ -523,7 +524,6 @@ class EXOAnimationQueue implements Animation.AnimationListener {
 
     void generateWithCollection(EXOAnimationCollection collection, EXOImageView toStartOn, double fps) {
         viewToRunOn = toStartOn;
-        viewToRunOn.dispatchDisplayHint();
         animations = collection.generateWholeAnimation(1.0 / fps, viewToRunOn);
     }
 
