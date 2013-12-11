@@ -123,6 +123,8 @@ public class ExoAnimationActivity extends Activity {
 
     public EXOImageView addImage(final int x, final int y, final int resourceId, final EXOAnimationScreenConfig screen) {
         EXOImageView img = new EXOImageView(this);
+        img.setDrawingCacheEnabled(true);
+        img.setDrawingCacheQuality(EXOImageView.DRAWING_CACHE_QUALITY_LOW);
         img.setScaleType(ImageView.ScaleType.FIT_XY); //(correct aspect ratio later)
         img.setImageResource(resourceId);
         RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
