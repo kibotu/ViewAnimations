@@ -199,7 +199,9 @@ class EXOAnimationElement implements AnimStateGetter,AnimStateGetterGlobal {
         fadeOut,
         fadeInOut,
         waitInvisible,
-        wait
+        wait,
+        move,
+        scale
     }
 
     protected double startTime;
@@ -371,9 +373,12 @@ class EXOAnimationGenerator extends EXOAnimationElement
             animationSet.addAnimation(tempAnimation);
         }
 
-        animationSet.setFillAfter(true);
-        animationSet.setFillBefore(true);
-        animationSet.setFillEnabled(true);
+        if (addedOne)
+        {
+            animationSet.setFillAfter(true);
+            animationSet.setFillBefore(true);
+            animationSet.setFillEnabled(true);
+        }
         return animationSet;
     }
 
@@ -470,7 +475,7 @@ class EXOAnimationElementMove extends EXOAnimationElement
 
     EXOAnimationElementMove()
     {
-        elementType = ElementType.wiggle;
+        elementType = ElementType.move;
     }
 
     static EXOAnimationElementMove create(double startTime, double endTime, double fromX, double fromY, double toX, double toY)
@@ -491,6 +496,41 @@ class EXOAnimationElementMove extends EXOAnimationElement
         EXOAnimationState ret = EXOAnimationState.identity();
         ret.posX = (toX - fromX) * time / duration + fromX;
         ret.posY = (toY - fromY) * time / duration + fromY;
+        return ret;
+    }
+}
+
+class EXOAnimationElementScale extends EXOAnimationElement
+{
+
+    double fromX;
+    double fromY;
+    double toX;
+    double toY;
+
+    EXOAnimationElementScale()
+    {
+        elementType = ElementType.scale;
+    }
+
+    static EXOAnimationElementScale create(double startTime, double endTime, double fromX, double fromY, double toX, double toY)
+    {
+        EXOAnimationElementScale ret = new EXOAnimationElementScale();
+        ret.startTime = startTime;
+        ret.duration = endTime - startTime;
+        ret.fromX = fromX;
+        ret.fromY = fromY;
+        ret.toX = toX;
+        ret.toY = toY;
+        return ret;
+    }
+
+    @Override
+    public EXOAnimationState stateAtTime(double time, EXOImageView image)
+    {
+        EXOAnimationState ret = EXOAnimationState.identity();
+        ret.scaleX = (toX - fromX) * time / duration + fromX;
+        ret.scaleY = (toY - fromY) * time / duration + fromY;
         return ret;
     }
 }
