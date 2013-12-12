@@ -386,7 +386,7 @@ class EXOAnimationGenerator extends EXOAnimationElement
 
     private boolean eps(final double val1, final double val2)
     {
-        return Math.abs(val2 - val1) < 0.01;
+        return Math.abs(val2 - val1) < 0.001;
     }
 
     @Override
