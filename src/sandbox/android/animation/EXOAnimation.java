@@ -325,7 +325,7 @@ class EXOAnimationGenerator extends EXOAnimationElement
         state.posY = screen.scaleY(state.posY);
     }
 
-    Animation generateAnimationFromTimeToTime(double time1, double time2, EXOImageView image)
+    Animation generateAnimationFromTimeToTime(double time1, double time2, EXOImageView image, boolean restoreAlpha)
     {
         EXOAnimationState state1 = getStateForGlobalTime(time1, image);
         EXOAnimationState state2 = getStateForGlobalTime(time2, image);
@@ -359,9 +359,11 @@ class EXOAnimationGenerator extends EXOAnimationElement
             addedOne = true;
         }
 
-        if (!(eps(state1.alpha,1.0) && eps(state2.alpha,1.0)))
+        if ( (!(eps(state1.alpha,1.0) && eps(state2.alpha,1.0))) || restoreAlpha)
         {
             Animation alphaAnimation = new AlphaAnimation((float)state1.alpha,(float)state2.alpha);
+            if (restoreAlpha)
+                alphaAnimation = new AlphaAnimation(0.9f,1.f);
             animationSet.addAnimation(alphaAnimation);
             addedOne = true;
         }
@@ -430,17 +432,20 @@ class EXOAnimationGenerator extends EXOAnimationElement
             ret.add(animationSet);
         }
 
+        boolean first = true;
         double time = startTime * this.timeScale;
         for (; time < endTime * this.timeScale; time += timeDelta * this.timeScale)
         {
-            Animation anim = generateAnimationFromTimeToTime(time, time + timeDelta * this.timeScale, image);
+            Animation anim = generateAnimationFromTimeToTime(time, time + timeDelta * this.timeScale, image,first && waitBeforeHidden);
             ret.add(anim);
+            first = false;
         }
         endTime -= 0.001;// das delta issnen bissl arbitary
         endTime *= this.timeScale;
         if (endTime>time)
         {
-            Animation anim = generateAnimationFromTimeToTime(time, endTime, image);
+            Animation anim = generateAnimationFromTimeToTime(time, endTime, image,first && waitBeforeHidden);
+            first = false;
             ret.add(anim);
         }
 
@@ -604,19 +609,21 @@ class EXOAnimationElementSpline extends EXOAnimationElement implements Spline.Ca
 }
 
 class EXOAnimationElementRotate extends EXOAnimationElement {
-    double repeats = 1.0;
+    double startAngle = 0.0;
+    double endAngle = 0.0;
 
     EXOAnimationElementRotate()
     {
         elementType = ElementType.rotate;
     }
 
-    static EXOAnimationElementRotate create(double startTime, double endTime, double repeats)
+    static EXOAnimationElementRotate create(double startTime, double endTime, double startAngle, double endAngle)
     {
         EXOAnimationElementRotate ret = new EXOAnimationElementRotate();
         ret.startTime = startTime;
         ret.duration = endTime - startTime;
-        ret.repeats = repeats;
+        ret.startAngle = startAngle;
+        ret.endAngle = endAngle;
 
         return ret;
     }
@@ -625,7 +632,7 @@ class EXOAnimationElementRotate extends EXOAnimationElement {
     public EXOAnimationState stateAtTime(double time, EXOImageView image)
     {
         EXOAnimationState ret = EXOAnimationState.identity();
-        ret.rotation = time * repeats / duration * 360.0;
+        ret.rotation = (endAngle - startAngle) * time / duration + startAngle;
         return ret;
     }
 }
