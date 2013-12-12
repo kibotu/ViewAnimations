@@ -74,6 +74,12 @@ interface EXOAnimationCurveGetter {
 }
 
 class EXOAnimationCurveSin implements EXOAnimationCurveGetter {
+
+    static public EXOAnimationCurveSin create()
+    {
+        return new EXOAnimationCurveSin();
+    }
+
     @Override
     public double getInfluence(double t)
     {
@@ -191,7 +197,9 @@ class EXOAnimationElement implements AnimStateGetter,AnimStateGetterGlobal {
         blink,
         fadeIn,
         fadeOut,
-        fadeInOut
+        fadeInOut,
+        waitInvisible,
+        wait
     }
 
     protected double startTime;
@@ -247,6 +255,14 @@ class EXOAnimationElement implements AnimStateGetter,AnimStateGetterGlobal {
         return this;
     }
 
+    public EXOAnimationElement addAnimationAndMakeGlobal(EXOAnimationElement element)
+    {
+        this.elements.add(element);
+        element.duration = 1000000.0;
+        element.startTime = 0.0;
+        return this;
+    }
+
     @Override
     public EXOAnimationState getStateForGlobalTime(double time, EXOImageView image)
     {
@@ -281,7 +297,8 @@ class EXOAnimationElement implements AnimStateGetter,AnimStateGetterGlobal {
 class EXOAnimationGenerator extends EXOAnimationElement
 {
     public static EXOAnimationScreenConfig screen = EXOAnimationScreenConfig.NO_SCALING;
-    double preDelay = 0.0;
+    double waitBefore = 0.0;
+    boolean waitBeforeHidden = false;
     double timeScale = 1.0;
 
     static EXOAnimationGenerator create()
@@ -396,11 +413,13 @@ class EXOAnimationGenerator extends EXOAnimationElement
 
         ArrayList<Animation> ret = new ArrayList<Animation>();
 
-        if (!eps(this.preDelay*this.timeScale,0.0))
+        if (!eps(this.waitBefore*this.timeScale,0.0))
         {
             Animation tempAnimation = new Animation(){};
+            if (waitBeforeHidden)
+                tempAnimation = new AlphaAnimation(0,0);
             AnimationSet animationSet = new AnimationSet(true);
-            animationSet.setDuration((long) (this.preDelay * this.timeScale * 1000.0));
+            animationSet.setDuration((long) (this.waitBefore * this.timeScale * 1000.0));
             animationSet.setInterpolator(new LinearInterpolator());
             animationSet.addAnimation(tempAnimation);
             ret.add(animationSet);
@@ -423,11 +442,12 @@ class EXOAnimationGenerator extends EXOAnimationElement
         return ret;
     }
 
-    EXOAnimationGenerator waitBefore(double time)
+    EXOAnimationGenerator preDelay(double time,boolean hidden)
     {
         EXOAnimationGenerator cloned = this.clone();
-        cloned.preDelay = time;
-        return cloned;
+        cloned.waitBefore = time;
+        cloned.waitBeforeHidden = hidden;
+        return cloned; // it's not really cloned :(
     }
 
     @Override
@@ -435,7 +455,7 @@ class EXOAnimationGenerator extends EXOAnimationElement
     {
         EXOAnimationGenerator ret = new EXOAnimationGenerator();
         ret.elements = new ArrayList<EXOAnimationElement>(elements); // the elements itself arent cloned
-        ret.preDelay = preDelay;
+        ret.waitBefore = waitBefore;
         return ret;
     }
 }
@@ -687,9 +707,83 @@ class EXOAnimationElementBlink extends EXOAnimationElement {
     }
 }
 
-class EXOAnimationElementFadeOut extends EXOAnimationElement {
+class EXOAnimationElementFade extends EXOAnimationElement {
 
-    double factor;
+    double from;
+    double to;
+
+    EXOAnimationElementFade()
+    {
+        elementType = ElementType.fadeIn;
+    }
+
+    static EXOAnimationElementFade create(double startTime, double endTime, double from, double to)
+    {
+        EXOAnimationElementFade ret = new EXOAnimationElementFade();
+        ret.startTime = startTime;
+        ret.duration = endTime - startTime;
+        ret.from = from;
+        ret.to = to;
+        return ret;
+    }
+
+    @Override
+    public EXOAnimationState stateAtTime(double time, EXOImageView image)
+    {
+        EXOAnimationState ret = EXOAnimationState.identity();
+        ret.alpha = (to-from) * time / duration + from;
+        return ret;
+    }
+}
+
+class EXOAnimationElementWaitInvisible extends EXOAnimationElement
+{
+    EXOAnimationElementWaitInvisible()
+    {
+        elementType = ElementType.waitInvisible;
+    }
+
+    static EXOAnimationElementWaitInvisible create(double startTime, double endTime)
+    {
+        EXOAnimationElementWaitInvisible ret = new EXOAnimationElementWaitInvisible();
+        ret.startTime = startTime;
+        ret.duration = endTime - startTime;
+        return ret;
+    }
+
+    @Override
+    public EXOAnimationState stateAtTime(double time, EXOImageView image)
+    {
+        EXOAnimationState ret = EXOAnimationState.identity();
+        ret.alpha = 0.0;
+        return ret;
+    }
+}
+
+class EXOAnimationElementWait extends EXOAnimationElement
+{
+    EXOAnimationElementWait()
+    {
+        elementType = ElementType.wait;
+    }
+
+    static EXOAnimationElementWait create(double startTime, double endTime)
+    {
+        EXOAnimationElementWait ret = new EXOAnimationElementWait();
+        ret.startTime = startTime;
+        ret.duration = endTime - startTime;
+        return ret;
+    }
+
+    @Override
+    public EXOAnimationState stateAtTime(double time, EXOImageView image)
+    {
+        EXOAnimationState ret = EXOAnimationState.identity();
+        return ret;
+    }
+}
+
+class EXOAnimationElementFadeOut extends EXOAnimationElement {
 
     EXOAnimationElementFadeOut()
     {
@@ -714,8 +808,6 @@ class EXOAnimationElementFadeOut extends EXOAnimationElement {
 }
 
 class EXOAnimationElementFadeIn extends EXOAnimationElement {
-
-    double factor;
 
     EXOAnimationElementFadeIn()
     {

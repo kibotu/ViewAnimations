@@ -53,6 +53,7 @@ public class ExoAnimationActivity extends Activity {
         EXOAnimationScreenConfig screen = EXOAnimationScreenConfig.x600;
         EXOAnimationGenerator.screen = screen;
 
+        double logoFadeInTime = 0.5;
 
         addImage(355, 576, R.drawable.bg, screen);               // bg 355*576
         EXOImageView ray    = addImage(314, 242, R.drawable.ray, screen);              // ray 314*242
@@ -63,15 +64,17 @@ public class ExoAnimationActivity extends Activity {
             EXOAnimationGenerator generator = EXOAnimationGenerator.create();
             double angle = Math.random()*2.0*Math.PI;
 
-            generator.addAnimation(EXOAnimationElementMove.create(0,2, 0,0,Math.sin(angle)*600.0,Math.cos(angle)*600.0).addAnimation(EXOAnimationElementFadeOut.create(0,2)));
-            runAnimation(particle,5.0,generator.waitBefore(Math.random()*2.0));
+            generator.addAnimation(EXOAnimationElementWaitInvisible.create(0.0, logoFadeInTime+Math.random()*2.0).appendAnimation(EXOAnimationElementRepeat.create(20.0, EXOAnimationElementMove.create(0, 2, 0, 0, Math.sin(angle) * 600.0, Math.cos(angle) * 600.0).addAnimation(EXOAnimationElementFadeOut.create(0, 2)))));
+            runAnimation(particle,5.0,generator);
         }
 
-        EXOImageView green  = addImage(355+90, 596-30*2, R.drawable.jelly_green, screen);      // jelly_green 355*576
-        EXOImageView red    = addImage(355+225, 596-25*3, R.drawable.jelly_red, screen);        // jelly_red 355*576
-        EXOImageView pink   = addImage(355+150, 596-20*2, R.drawable.jelly_pink, screen);       // jelly_pink 355*576
-        EXOImageView blue   = addImage(355+70, 596, R.drawable.jelly_blue, screen);       // jelly_blue 355*576
-        EXOImageView yellow = addImage(355+300, 596, R.drawable.jelly_yellow, screen);     // jelly_yellow 355*576
+        double sy = -800;
+
+        EXOImageView green  = addImage(355+90, 596-30*2  , R.drawable.jelly_green, screen);      // jelly_green 355*576
+        EXOImageView red    = addImage(355+225, 596-25*3 , R.drawable.jelly_red, screen);        // jelly_red 355*576
+        EXOImageView pink   = addImage(355+150, 596-20*2 , R.drawable.jelly_pink, screen);       // jelly_pink 355*576
+        EXOImageView blue   = addImage(355+70, 596       , R.drawable.jelly_blue, screen);       // jelly_blue 355*576
+        EXOImageView yellow = addImage(355+300, 596      , R.drawable.jelly_yellow, screen);     // jelly_yellow 355*576
         EXOImageView logo   = addImage(294, 268, R.drawable.logo, screen);             // logo 294*268
         EXOImageView kakaoText = addImage(239+20, 530, R.drawable.speech_ballon, screen);    // speech_ballon 239*530
         EXOImageView tree1 = addImage(51, 564, R.drawable.tree_ol_1, screen);         // tree_ol_1 051*564
@@ -91,31 +94,47 @@ public class ExoAnimationActivity extends Activity {
             points.add(point);
         }
 
-        EXOAnimationElement wiggleAlone = EXOAnimationElementRepeat.create(15, EXOAnimationElementWiggle.create(0, 0.75, 15.0)).addAnimation(EXOAnimationElementRepeat.create(10, EXOAnimationElementWobble.create(0, 1, 0.3).applyCurve(EXOAnimationCurveCosineInOut.create(0.5, 0.5))));
+        double depth = 0.325;
+        double wrepeats = 20;
+        EXOAnimationElement wiggleAlone = EXOAnimationElementRepeat.create(wrepeats*0.75, EXOAnimationElementWiggle.create(0, 0.75, 15.0*depth)).addAnimation(EXOAnimationElementRepeat.create(wrepeats*1.0, EXOAnimationElementWobble.create(0, 1, 0.3*depth).applyCurve(EXOAnimationCurveCosineInOut.create(0.5, 0.5))));
 
         EXOAnimationGenerator wiggle = (EXOAnimationGenerator)EXOAnimationGenerator.create()
                 .addAnimation(wiggleAlone)
-                .addAnimation(EXOAnimationElementRepeat.create(10, EXOAnimationElementJump.create(0, 0.5, 30.0).appendAnimation(EXOAnimationElementJump.create(0, 0.7, 50.0)))
+                .addAnimation(EXOAnimationElementRepeat.create(wrepeats*(0.5+0.7), EXOAnimationElementJump.create(0, 0.5, 30.0).appendAnimation(EXOAnimationElementJump.create(0, 0.7, 50.0)))
                 );
 
         double fps = 4.0;
-        double wave = 0.3;
+        double wave = 0.3782;
 
-        runAnimation(blue, fps      ,wiggle.waitBefore(wave*0.0));
-        runAnimation(green, fps     ,wiggle.waitBefore(wave*1.0));
-        runAnimation(pink, fps      ,wiggle.waitBefore(wave*2.0));
-        runAnimation(red, fps       ,wiggle.waitBefore(wave*3.0));
-        runAnimation(yellow, fps    ,wiggle.waitBefore(wave*4.0));
+        double staticDelay = 0.2+logoFadeInTime;
+        double varDelay = 0.2;
+
+        double d1 = staticDelay + varDelay * 0.0;
+        double d2 = staticDelay + varDelay * 1.0;
+        double d3 = staticDelay + varDelay * 2.0;
+        double d4 = staticDelay + varDelay * 3.0;
+        double d5 = staticDelay + varDelay * 4.0;
+
+        runAnimation(blue, fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 0.0,true).appendAnimation(EXOAnimationElementMove.create(0.0, d1, 0, sy, 0, 0).addAnimation(EXOAnimationElementFadeIn.create(0.0, d1))).appendAnimation(wiggle));
+        runAnimation(green, fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 1.0,true).appendAnimation(EXOAnimationElementMove.create(0.0, d2, 0, sy, 0, 0).addAnimation(EXOAnimationElementFadeIn.create(0.0, d2))).appendAnimation(wiggle));
+        runAnimation(pink, fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 2.0,true).appendAnimation(EXOAnimationElementMove.create(0.0, d3, 0, sy, 0, 0).addAnimation(EXOAnimationElementFadeIn.create(0.0, d3))).appendAnimation(wiggle));
+        runAnimation(red, fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 3.0,true).appendAnimation(EXOAnimationElementMove.create(0.0, d4, 0, sy, 0, 0).addAnimation(EXOAnimationElementFadeIn.create(0.0, d4))).appendAnimation(wiggle));
+        runAnimation(yellow, fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 4.0,true).appendAnimation(EXOAnimationElementMove.create(0.0, d5, 0, sy, 0, 0).addAnimation(EXOAnimationElementFadeIn.create(0.0, d5))).appendAnimation(wiggle));
 
         wave = 0.1;
-        runAnimation(critter1, fps  ,wiggle.waitBefore(wave*0.0));
-        runAnimation(critter2, fps  ,wiggle.waitBefore(wave*1.0));
-        runAnimation(critter3, fps  ,wiggle.waitBefore(wave*2.0));
-        runAnimation(critter4, fps  ,EXOAnimationGenerator.create(wiggleAlone).waitBefore(wave*3.0));
+        runAnimation(critter1, fps  ,wiggle.preDelay(wave * 0.0,false));
+        runAnimation(critter2, fps  ,wiggle.preDelay(wave * 1.0,false));
+        runAnimation(critter3, fps  ,wiggle.preDelay(wave * 2.0,false));
+        runAnimation(critter4, fps  ,EXOAnimationGenerator.create(wiggleAlone).preDelay(wave * 3.0,false));
  
-        runAnimation(logo, 10.0, (EXOAnimationGenerator)EXOAnimationGenerator.create().addAnimation(EXOAnimationElementRepeat.create(10.0, EXOAnimationElementWiggle.create(0, 3, 2.5))));
-        runAnimation(ray, fps,(EXOAnimationGenerator)EXOAnimationGenerator.create().addAnimation(EXOAnimationElementRotate.create(0, 80, 16)));
-        runAnimation(kakaoText, fps*3.0,(EXOAnimationGenerator)EXOAnimationGenerator.create().addAnimation(EXOAnimationElementRepeat.create(20.0, EXOAnimationElementBlink.create(0, 1,0.2)).addAnimation(EXOAnimationElementRepeat.create(10, EXOAnimationElementWobble.create(0, 0.5, 0.1).addAnimation(EXOAnimationElementJump.create(0,1.0,30))))));
+        runAnimation(logo, 10.0, (EXOAnimationGenerator) EXOAnimationGenerator.create()
+                .addAnimation(EXOAnimationElementMove.create(0, logoFadeInTime, 0, -500, 0, 0).applyCurve(EXOAnimationCurveCosineInOut.create(0, 0.125)))
+                .addAnimation(EXOAnimationElementFadeIn.create(0, logoFadeInTime).applyCurve(EXOAnimationCurveCosineInOut.create(0, 0.125)))
+                .appendAnimation(EXOAnimationElementRepeat.create(10.0, EXOAnimationElementWiggle.create(0, 3, 2.5))));
+        runAnimation(ray, fps,(EXOAnimationGenerator)EXOAnimationGenerator.create().addAnimation(EXOAnimationElementRotate.create(0, 80, 16)).addAnimation(EXOAnimationElementFadeIn.create(0, 2.0)));
+        runAnimation(kakaoText, fps * 3.0, (EXOAnimationGenerator) EXOAnimationGenerator.create().appendAnimation(EXOAnimationElementWaitInvisible.create(0.0, staticDelay + varDelay * 1.0)).
+                appendAnimation(EXOAnimationElementMove.create(0.0, varDelay * 1.0, 0, sy, 0, 0)).
+                addAnimation(EXOAnimationElementRepeat.create(20.0, EXOAnimationElementBlink.create(0, 1, 0.2)).addAnimation(EXOAnimationElementRepeat.create(10, EXOAnimationElementWobble.create(0, 0.5, 0.1).addAnimation(EXOAnimationElementJump.create(0, 1.0, 30))))));
 
         tree1.anchorY = 1.0;
         tree2.anchorY = 1.0;
@@ -126,7 +145,7 @@ public class ExoAnimationActivity extends Activity {
 
     }
 
-    public EXOImageView addImage(final int x, final int y, final int resourceId, final EXOAnimationScreenConfig screen) {
+    public EXOImageView addImage(final double x, final double y, final int resourceId, final EXOAnimationScreenConfig screen) {
         EXOImageView img = new EXOImageView(this);
         //img.setDrawingCacheEnabled(true);
         //img.setDrawingCacheQuality(EXOImageView.DRAWING_CACHE_QUALITY_AUTO);
