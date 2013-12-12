@@ -95,7 +95,7 @@ public class ExoAnimationActivity extends Activity {
 
         EXOAnimationGenerator wiggle = (EXOAnimationGenerator)EXOAnimationGenerator.create()
                 .addAnimation(wiggleAlone)
-                .addAnimation(EXOAnimationElementRepeat.create(10, EXOAnimationElementJump.create(0, 0.5, 40.0).appendAnimation(EXOAnimationElementJump.create(0, 0.7, 80.0)))
+                .addAnimation(EXOAnimationElementRepeat.create(10, EXOAnimationElementJump.create(0, 0.5, 30.0).appendAnimation(EXOAnimationElementJump.create(0, 0.7, 50.0)))
                 );
 
         double fps = 4.0;
@@ -115,7 +115,7 @@ public class ExoAnimationActivity extends Activity {
  
         runAnimation(logo, 10.0, (EXOAnimationGenerator)EXOAnimationGenerator.create().addAnimation(EXOAnimationElementRepeat.create(10.0, EXOAnimationElementWiggle.create(0, 3, 2.5))));
         runAnimation(ray, fps,(EXOAnimationGenerator)EXOAnimationGenerator.create().addAnimation(EXOAnimationElementRotate.create(0, 80, 16)));
-        runAnimation(kakaoText, fps,(EXOAnimationGenerator)EXOAnimationGenerator.create().addAnimation(EXOAnimationElementRepeat.create(10.0, EXOAnimationElementBlink.create(0, 1,0.2)).appendAnimation(wiggle)));
+        runAnimation(kakaoText, fps*3.0,(EXOAnimationGenerator)EXOAnimationGenerator.create().addAnimation(EXOAnimationElementRepeat.create(20.0, EXOAnimationElementBlink.create(0, 1,0.2)).addAnimation(wiggleAlone)));
 
         tree1.anchorY = 1.0;
         tree2.anchorY = 1.0;
@@ -135,7 +135,7 @@ public class ExoAnimationActivity extends Activity {
         RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
         lp.width = (int) screen.scaleX(img.getDrawable().getIntrinsicWidth());
         lp.height = (int) screen.scaleY(img.getDrawable().getIntrinsicHeight());
-        lp.setMargins((int) screen.scaleX(x) - lp.width / 2, (int) screen.scaleY(y) - lp.height / 2, -lp.width / 2, -lp.height / 2);
+        lp.setMargins((int) screen.posX(x) - lp.width / 2, (int) screen.posY(y) - lp.height / 2, -lp.width / 2, -lp.height / 2);
         img.setAdjustViewBounds(true);
         img.setLayoutParams(lp);
         layout.addView(img);

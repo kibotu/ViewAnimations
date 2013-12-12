@@ -6,13 +6,15 @@ import android.view.animation.*;
 import java.util.ArrayList;
 import java.util.List;
 
-interface AnimStateGetter {
+interface AnimStateGetter
+{
     public EXOAnimationState stateAtTime(double time, EXOImageView image);
 }
 
 interface AnimStateGetterGlobal
 {
     public EXOAnimationState getStateForGlobalTime(double time, EXOImageView image);
+    public double getDuration();
 }
 
 
@@ -23,7 +25,8 @@ class EXOAnimationState {
     double alpha;
     double sheerX, sheerY;
 
-    static EXOAnimationState identity() {
+    static EXOAnimationState identity()
+    {
         EXOAnimationState ret = new EXOAnimationState();
 
         ret.scaleX = ret.scaleY = 1.0;
@@ -35,7 +38,8 @@ class EXOAnimationState {
         return ret;
     }
 
-    public EXOAnimationState combine(EXOAnimationState second) {
+    public EXOAnimationState combine(EXOAnimationState second)
+    {
         this.scaleX *= second.scaleX;
         this.scaleY *= second.scaleY;
         this.posX += second.posX;
@@ -47,8 +51,10 @@ class EXOAnimationState {
         return this;
     }
 
-    public EXOAnimationState fadeCurve(double between0and1, EXOAnimationCurveGetter curve) {
-        if (curve != null) {
+    public EXOAnimationState fadeCurve(double between0and1, EXOAnimationCurveGetter curve)
+    {
+        if (curve != null)
+        {
             double val = curve.getInfluence(between0and1);
             this.scaleX = (this.scaleX - 1.0) * val + 1.0;
             this.scaleY = (this.scaleY - 1.0) * val + 1.0;
@@ -69,16 +75,19 @@ interface EXOAnimationCurveGetter {
 
 class EXOAnimationCurveSin implements EXOAnimationCurveGetter {
     @Override
-    public double getInfluence(double t) {
+    public double getInfluence(double t)
+    {
         return Math.sin(t * Math.PI); // fades from 0 to 1 and back
     }
 }
 
 class EXOAnimationCurveLinearInOut implements EXOAnimationCurveGetter {
+
     double fadeintill = 0.0;
     double fadeoutfrom = 1.0;
 
-    static EXOAnimationCurveLinearInOut create(double fadeintill, double fadeoutfrom) {
+    static EXOAnimationCurveLinearInOut create(double fadeintill, double fadeoutfrom)
+    {
         EXOAnimationCurveLinearInOut ret = new EXOAnimationCurveLinearInOut();
         ret.fadeintill = fadeintill;
         ret.fadeoutfrom = fadeoutfrom;
@@ -86,7 +95,8 @@ class EXOAnimationCurveLinearInOut implements EXOAnimationCurveGetter {
     }
 
     @Override
-    public double getInfluence(double t) {
+    public double getInfluence(double t)
+    {
         if (t < fadeintill)
             return Math.max(0.0, t / fadeintill);
         if (t > fadeoutfrom)
@@ -96,10 +106,12 @@ class EXOAnimationCurveLinearInOut implements EXOAnimationCurveGetter {
 }
 
 class EXOAnimationCurveCosineInOut implements EXOAnimationCurveGetter {
+
     double fadeintill = 0.0;
     double fadeoutfrom = 1.0;
 
-    static EXOAnimationCurveLinearInOut create(double fadeintill, double fadeoutfrom) {
+    static EXOAnimationCurveLinearInOut create(double fadeintill, double fadeoutfrom)
+    {
         EXOAnimationCurveLinearInOut ret = new EXOAnimationCurveLinearInOut();
         ret.fadeintill = fadeintill;
         ret.fadeoutfrom = fadeoutfrom;
@@ -112,7 +124,8 @@ class EXOAnimationCurveCosineInOut implements EXOAnimationCurveGetter {
     }
 
     @Override
-    public double getInfluence(double t) {
+    public double getInfluence(double t)
+    {
         if (t < fadeintill)
             return formula(Math.max(0.0, t / fadeintill));
         if (t > fadeoutfrom)
@@ -137,16 +150,29 @@ enum EXOAnimationScreenConfig
     private final double scaleX, scaleY;
     private final double yAspectFix = 1.0;
 
-    private EXOAnimationScreenConfig(final double scaleX, final double scaleY) {
+    private EXOAnimationScreenConfig(final double scaleX, final double scaleY)
+    {
         this.scaleX = scaleX;
         this.scaleY = scaleY;
     }
 
-    public double scaleX(final double x) {
+    public double scaleX(final double x)
+    {
         return x * scaleX / x768.scaleX;
     }
 
-    public double scaleY(final double y) {
+    public double scaleY(final double y)
+    {
+        return y * scaleY / x768.scaleY * yAspectFix;
+    }
+
+    public double posX(final double x)
+    {
+        return x * scaleX / x768.scaleX;
+    }
+
+    public double posY(final double y)
+    {
         return y * scaleY / x768.scaleY * yAspectFix;
     }
 }
@@ -175,25 +201,28 @@ class EXOAnimationElement implements AnimStateGetter,AnimStateGetterGlobal {
     EXOAnimationCurveGetter fadeCurve;
     ArrayList<EXOAnimationElement> elements = new ArrayList<EXOAnimationElement>();
 
-    EXOAnimationElement() {
+    EXOAnimationElement()
+    {
         elementType = ElementType.pure;
         startTime = 0.0;
         duration = 0.0;
         overallDuration = 0.0;
     }
 
-    public EXOAnimationElement applyCurve(EXOAnimationCurveGetter curve) {
+    public EXOAnimationElement applyCurve(EXOAnimationCurveGetter curve)
+    {
         fadeCurve = curve;
         return this;
     }
 
-    double getDuration()
+    public double getDuration()
     {
         return Math.max(overallDuration,duration);
     }
 
     @Override
-    public EXOAnimationState stateAtTime(double time, EXOImageView image) {
+    public EXOAnimationState stateAtTime(double time, EXOImageView image)
+    {
         return EXOAnimationState.identity();
     }
 
@@ -219,7 +248,8 @@ class EXOAnimationElement implements AnimStateGetter,AnimStateGetterGlobal {
     }
 
     @Override
-    public EXOAnimationState getStateForGlobalTime(double time, EXOImageView image) {
+    public EXOAnimationState getStateForGlobalTime(double time, EXOImageView image)
+    {
 
         EXOAnimationState ret = null;
         if (time >= startTime && time < startTime + duration)
@@ -231,14 +261,16 @@ class EXOAnimationElement implements AnimStateGetter,AnimStateGetterGlobal {
             for (int i = 0; i < elements.size(); ++i)
             {
                 EXOAnimationElement element = elements.get(i);
-
-                EXOAnimationState state = element.getStateForGlobalTime(time, image);
-                if (state != null)
+                if (element != null && element != this)
                 {
-                    if (ret == null)
-                        ret = state;
-                    else
-                        ret.combine(state);
+                    EXOAnimationState state = element.getStateForGlobalTime(time, image);
+                    if (state != null)
+                    {
+                        if (ret == null)
+                            ret = state;
+                        else
+                            ret.combine(state);
+                    }
                 }
             }
         }
@@ -328,7 +360,8 @@ class EXOAnimationGenerator extends EXOAnimationElement
         return animationSet;
     }
 
-    private boolean eps(final double val1, final double val2) {
+    private boolean eps(final double val1, final double val2)
+    {
         return Math.abs(val2 - val1) < 0.01;
     }
 
@@ -347,12 +380,14 @@ class EXOAnimationGenerator extends EXOAnimationElement
         return ret;
     }
 
-    ArrayList<Animation> generateWholeAnimation(double timeDelta, EXOImageView image) {
+    ArrayList<Animation> generateWholeAnimation(double timeDelta, EXOImageView image)
+    {
 
         double startTime = 0.0;
         double endTime = 0.0;
 
-        for (int i = 0; i < elements.size(); ++i) {
+        for (int i = 0; i < elements.size(); ++i)
+        {
             EXOAnimationElement element = elements.get(i);
             double endHere = element.startTime + element.getDuration();
 
@@ -372,7 +407,8 @@ class EXOAnimationGenerator extends EXOAnimationElement
         }
 
         double time = startTime * this.timeScale;
-        for (; time < endTime * this.timeScale; time += timeDelta * this.timeScale) {
+        for (; time < endTime * this.timeScale; time += timeDelta * this.timeScale)
+        {
             Animation anim = generateAnimationFromTimeToTime(time, time + timeDelta * this.timeScale, image);
             ret.add(anim);
         }
@@ -440,11 +476,13 @@ class EXOAnimationElementMove extends EXOAnimationElement
 }
 
 class EXOAnimationElementSpline extends EXOAnimationElement implements Spline.Callback {
-    EXOAnimationElementSpline() {
+    EXOAnimationElementSpline()
+    {
         elementType = ElementType.spline;
     }
 
-    static EXOAnimationElementSpline create(double startTime, double endTime, List<PointF> points) {
+    static EXOAnimationElementSpline create(double startTime, double endTime, List<PointF> points)
+    {
         EXOAnimationElementSpline ret = new EXOAnimationElementSpline();
         ret.startTime = startTime;
         ret.duration = endTime - startTime;
@@ -458,7 +496,8 @@ class EXOAnimationElementSpline extends EXOAnimationElement implements Spline.Ca
     }
 
     @Override
-    public EXOAnimationState stateAtTime(double time, EXOImageView image) {
+    public EXOAnimationState stateAtTime(double time, EXOImageView image)
+    {
         EXOAnimationState ret = EXOAnimationState.identity();
         PointF p = pointAtTime(time);
         ret.posX = p.x;
@@ -472,19 +511,23 @@ class EXOAnimationElementSpline extends EXOAnimationElement implements Spline.Ca
 
     List<PointF> points;
 
-    protected float getTimeScale() {
+    protected float getTimeScale()
+    {
         return timeScale;
     }
 
-    protected void setTimeScale(final float timeScale) {
+    protected void setTimeScale(final float timeScale)
+    {
         this.timeScale = timeScale;
     }
 
-    protected void setSplineDuration(final float duration) {
+    protected void setSplineDuration(final float duration)
+    {
         setTimeScale((float) (linearSpline.size()) / duration);
     }
 
-    protected PointF pointAtTime(double time) {
+    protected PointF pointAtTime(double time)
+    {
         time *= timeScale;
         if (linearSpline.isEmpty())
             return new PointF(0, 0);
@@ -493,7 +536,8 @@ class EXOAnimationElementSpline extends EXOAnimationElement implements Spline.Ca
     }
 
     @Override
-    public void doCallback(final float x, final float y) {
+    public void doCallback(final float x, final float y)
+    {
         linearSpline.add(new PointF(x, y));
         //To change body of implemented methods use File | Settings | File Templates.
     }
@@ -502,11 +546,13 @@ class EXOAnimationElementSpline extends EXOAnimationElement implements Spline.Ca
 class EXOAnimationElementRotate extends EXOAnimationElement {
     double repeats = 1.0;
 
-    EXOAnimationElementRotate() {
+    EXOAnimationElementRotate()
+    {
         elementType = ElementType.rotate;
     }
 
-    static EXOAnimationElementRotate create(double startTime, double endTime, double repeats) {
+    static EXOAnimationElementRotate create(double startTime, double endTime, double repeats)
+    {
         EXOAnimationElementRotate ret = new EXOAnimationElementRotate();
         ret.startTime = startTime;
         ret.duration = endTime - startTime;
@@ -516,7 +562,8 @@ class EXOAnimationElementRotate extends EXOAnimationElement {
     }
 
     @Override
-    public EXOAnimationState stateAtTime(double time, EXOImageView image) {
+    public EXOAnimationState stateAtTime(double time, EXOImageView image)
+    {
         EXOAnimationState ret = EXOAnimationState.identity();
         ret.rotation = time * repeats / duration * 360.0;
         return ret;
@@ -527,11 +574,13 @@ class EXOAnimationElementWiggle extends EXOAnimationElement {
 
     double angleDelta;
 
-    EXOAnimationElementWiggle() {
+    EXOAnimationElementWiggle()
+    {
         elementType = ElementType.wiggle;
     }
 
-    static EXOAnimationElementWiggle create(double startTime, double endTime, double angleDelta) {
+    static EXOAnimationElementWiggle create(double startTime, double endTime, double angleDelta)
+    {
         EXOAnimationElementWiggle ret = new EXOAnimationElementWiggle();
         ret.startTime = startTime;
         ret.duration = endTime - startTime;
@@ -541,7 +590,8 @@ class EXOAnimationElementWiggle extends EXOAnimationElement {
     }
 
     @Override
-    public EXOAnimationState stateAtTime(double time, EXOImageView image) {
+    public EXOAnimationState stateAtTime(double time, EXOImageView image)
+    {
         EXOAnimationState ret = EXOAnimationState.identity();
         ret.rotation = Math.sin(time / duration * 2.0 * Math.PI) * angleDelta;
         return ret;
@@ -549,25 +599,63 @@ class EXOAnimationElementWiggle extends EXOAnimationElement {
 }
 
 class EXOAnimationElementRepeat extends EXOAnimationElement {
-    double repeats = 1.0;
-    EXOAnimationElement anim;
 
-    EXOAnimationElementRepeat() {
+    double repeats = 1.0;
+    EXOAnimationElement anim = null;
+
+    EXOAnimationElementRepeat()
+    {
         elementType = ElementType.repeat;
     }
 
-    static EXOAnimationElementRepeat create(double repeats,EXOAnimationElement toRepeat) {
+    static EXOAnimationElementRepeat create(double repeats,EXOAnimationElement toRepeat)
+    {
         EXOAnimationElementRepeat ret = new EXOAnimationElementRepeat();
         ret.repeats = repeats;
-        ret.startTime = toRepeat.startTime;
-        ret.duration = toRepeat.getDuration() * repeats;
+        ret.startTime = 0.0;
+        ret.duration = 0.0;
         ret.anim = toRepeat;
         return ret;
     }
 
+    public double getDuration()
+    {
+        return Math.max(this.overallDuration,anim.getDuration()) * repeats;
+    }
+
     @Override
-    public EXOAnimationState stateAtTime(double time, EXOImageView image) {
-        return anim.getStateForGlobalTime(startTime + (time % anim.getDuration()), image).fadeCurve((time - startTime) / duration, fadeCurve);
+    public EXOAnimationState getStateForGlobalTime(double time, EXOImageView image)
+    {
+        EXOAnimationState ret = EXOAnimationState.identity();
+        if (anim != null && anim != this)
+        {
+            if (time >= startTime && time < startTime + this.getDuration())
+            {
+                double into = (time-startTime) % Math.max(this.overallDuration,anim.getDuration()); // ich verstehe den unterschied zwischen anim.starttime und this.starttime nicht, aber funktioniert erstmal
+                if (into < anim.getDuration())
+                {
+                    EXOAnimationState state = anim.getStateForGlobalTime(into + anim.startTime, image).fadeCurve((into - anim.startTime) / this.getDuration(), fadeCurve);
+                    if (state != null)
+                        ret.combine(state);
+                }
+            }
+        }
+
+        if (time >= startTime && time < startTime + this.getDuration())
+        {
+            for (int i = 0; i < elements.size(); ++i)
+            {
+                EXOAnimationElement element = elements.get(i);
+
+                if (element != null && element != this)
+                {
+                    EXOAnimationState state = element.getStateForGlobalTime(time, image);
+                    if (state != null)
+                        ret.combine(state);
+                }
+            }
+        }
+        return ret;
     }
 }
 
@@ -575,11 +663,13 @@ class EXOAnimationElementBlink extends EXOAnimationElement {
 
     double factor;
 
-    EXOAnimationElementBlink() {
+    EXOAnimationElementBlink()
+    {
         elementType = ElementType.blink;
     }
 
-    static EXOAnimationElementBlink create(double startTime, double endTime, double factor) {
+    static EXOAnimationElementBlink create(double startTime, double endTime, double factor)
+    {
         EXOAnimationElementBlink ret = new EXOAnimationElementBlink();
         ret.startTime = startTime;
         ret.duration = endTime - startTime;
@@ -589,7 +679,8 @@ class EXOAnimationElementBlink extends EXOAnimationElement {
     }
 
     @Override
-    public EXOAnimationState stateAtTime(double time, EXOImageView image) {
+    public EXOAnimationState stateAtTime(double time, EXOImageView image)
+    {
         EXOAnimationState ret = EXOAnimationState.identity();
         ret.alpha = 1.0 + Math.cos(time / duration * Math.PI * 2.0) * factor * 0.5 - factor * 0.5;
         return ret;
@@ -600,11 +691,13 @@ class EXOAnimationElementFadeOut extends EXOAnimationElement {
 
     double factor;
 
-    EXOAnimationElementFadeOut() {
+    EXOAnimationElementFadeOut()
+    {
         elementType = ElementType.fadeOut;
     }
 
-    static EXOAnimationElementFadeOut create(double startTime, double endTime) {
+    static EXOAnimationElementFadeOut create(double startTime, double endTime)
+    {
         EXOAnimationElementFadeOut ret = new EXOAnimationElementFadeOut();
         ret.startTime = startTime;
         ret.duration = endTime - startTime;
@@ -612,7 +705,8 @@ class EXOAnimationElementFadeOut extends EXOAnimationElement {
     }
 
     @Override
-    public EXOAnimationState stateAtTime(double time, EXOImageView image) {
+    public EXOAnimationState stateAtTime(double time, EXOImageView image)
+    {
         EXOAnimationState ret = EXOAnimationState.identity();
         ret.alpha = 1.0 - time / duration;
         return ret;
@@ -623,11 +717,13 @@ class EXOAnimationElementFadeIn extends EXOAnimationElement {
 
     double factor;
 
-    EXOAnimationElementFadeIn() {
+    EXOAnimationElementFadeIn()
+    {
         elementType = ElementType.fadeIn;
     }
 
-    static EXOAnimationElementFadeIn create(double startTime, double endTime) {
+    static EXOAnimationElementFadeIn create(double startTime, double endTime)
+    {
         EXOAnimationElementFadeIn ret = new EXOAnimationElementFadeIn();
         ret.startTime = startTime;
         ret.duration = endTime - startTime;
@@ -635,7 +731,8 @@ class EXOAnimationElementFadeIn extends EXOAnimationElement {
     }
 
     @Override
-    public EXOAnimationState stateAtTime(double time, EXOImageView image) {
+    public EXOAnimationState stateAtTime(double time, EXOImageView image)
+    {
         EXOAnimationState ret = EXOAnimationState.identity();
         ret.alpha = time / duration;
         return ret;
@@ -644,11 +741,13 @@ class EXOAnimationElementFadeIn extends EXOAnimationElement {
 
 class EXOAnimationElementFadeInOut extends EXOAnimationElement {
 
-    EXOAnimationElementFadeInOut() {
+    EXOAnimationElementFadeInOut()
+    {
         elementType = ElementType.fadeInOut;
     }
 
-    static EXOAnimationElementFadeInOut create(double startTime, double endTime) {
+    static EXOAnimationElementFadeInOut create(double startTime, double endTime)
+    {
         EXOAnimationElementFadeInOut ret = new EXOAnimationElementFadeInOut();
         ret.startTime = startTime;
         ret.duration = endTime - startTime;
@@ -656,7 +755,8 @@ class EXOAnimationElementFadeInOut extends EXOAnimationElement {
     }
 
     @Override
-    public EXOAnimationState stateAtTime(double time, EXOImageView image) {
+    public EXOAnimationState stateAtTime(double time, EXOImageView image)
+    {
         EXOAnimationState ret = EXOAnimationState.identity();
         ret.alpha = Math.sin(time / duration * Math.PI);
         return ret;
@@ -666,11 +766,13 @@ class EXOAnimationElementFadeInOut extends EXOAnimationElement {
 class EXOAnimationElementWobble extends EXOAnimationElement {
     double factor = 1.0;
 
-    EXOAnimationElementWobble() {
+    EXOAnimationElementWobble()
+    {
         elementType = ElementType.wobble;
     }
 
-    static EXOAnimationElementWobble create(double startTime, double endTime, double factor) {
+    static EXOAnimationElementWobble create(double startTime, double endTime, double factor)
+    {
         EXOAnimationElementWobble ret = new EXOAnimationElementWobble();
         ret.startTime = startTime;
         ret.duration = endTime - startTime;
@@ -680,7 +782,8 @@ class EXOAnimationElementWobble extends EXOAnimationElement {
     }
 
     @Override
-    public EXOAnimationState stateAtTime(double time, EXOImageView image) {
+    public EXOAnimationState stateAtTime(double time, EXOImageView image)
+    {
         double wobble = Math.sin(time * Math.PI * 2.0 / duration) * factor;
         double xScale = 1.0 + wobble;
         double yScale = 1.0 / xScale;
@@ -696,11 +799,13 @@ class EXOAnimationElementWobble extends EXOAnimationElement {
 class EXOAnimationElementJump extends EXOAnimationElement {
     double height = 1.0;
 
-    EXOAnimationElementJump() {
+    EXOAnimationElementJump()
+    {
         elementType = ElementType.rotate;
     }
 
-    static EXOAnimationElementJump create(double startTime, double endTime, double height) {
+    static EXOAnimationElementJump create(double startTime, double endTime, double height)
+    {
         EXOAnimationElementJump ret = new EXOAnimationElementJump();
         ret.startTime = startTime;
         ret.duration = endTime - startTime;
@@ -710,7 +815,8 @@ class EXOAnimationElementJump extends EXOAnimationElement {
     }
 
     @Override
-    public EXOAnimationState stateAtTime(double time, EXOImageView image) {
+    public EXOAnimationState stateAtTime(double time, EXOImageView image)
+    {
         EXOAnimationState ret = EXOAnimationState.identity();
         ret.posY = -Math.sin(time / duration * Math.PI) * height;
         return ret;
@@ -725,19 +831,23 @@ class EXOAnimationQueue implements Animation.AnimationListener {
     EXOImageView viewToRunOn;
     Animation currentActive;
 
-    void generateWithCollection(EXOAnimationGenerator animation, EXOImageView toStartOn, double fps) {
+    void generateWithCollection(EXOAnimationGenerator animation, EXOImageView toStartOn, double fps)
+    {
         viewToRunOn = toStartOn;
         animations = animation.generateWholeAnimation(1.0 / fps, viewToRunOn);
     }
 
-    void run() {
+    void run()
+    {
         currentIndex = -1;
         next();
     }
 
-    boolean next() {
+    boolean next()
+    {
         currentIndex++;
-        if (currentIndex == animations.size()) {
+        if (currentIndex == animations.size())
+        {
             if (looping) {
                 run();
                 return true;
@@ -748,7 +858,8 @@ class EXOAnimationQueue implements Animation.AnimationListener {
         if (currentActive != null)
             currentActive.setAnimationListener(null);
         currentActive = animations.get(currentIndex);
-        if (currentActive != null) {
+        if (currentActive != null)
+        {
             currentActive.setAnimationListener(this);
             viewToRunOn.clearAnimation();
             viewToRunOn.startAnimation(currentActive);
@@ -758,16 +869,19 @@ class EXOAnimationQueue implements Animation.AnimationListener {
     }
 
     @Override
-    public void onAnimationStart(final Animation animation) {
+    public void onAnimationStart(final Animation animation)
+    {
     }
 
     @Override
-    public void onAnimationEnd(final Animation animation) {
+    public void onAnimationEnd(final Animation animation)
+    {
         if (currentActive == animation)
             next();
     }
 
     @Override
-    public void onAnimationRepeat(final Animation animation) {
+    public void onAnimationRepeat(final Animation animation)
+    {
     }
 }
