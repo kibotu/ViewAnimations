@@ -73,7 +73,7 @@ public class ExoAnimationActivity extends Activity {
         EXOImageView blue   = addImage(355+70, 596, R.drawable.jelly_blue, screen);       // jelly_blue 355*576
         EXOImageView yellow = addImage(355+300, 596, R.drawable.jelly_yellow, screen);     // jelly_yellow 355*576
         EXOImageView logo   = addImage(294, 268, R.drawable.logo, screen);             // logo 294*268
-        EXOImageView kakaoText = addImage(239, 530, R.drawable.speech_ballon, screen);    // speech_ballon 239*530
+        EXOImageView kakaoText = addImage(239+20, 530, R.drawable.speech_ballon, screen);    // speech_ballon 239*530
         EXOImageView tree1 = addImage(51, 564, R.drawable.tree_ol_1, screen);         // tree_ol_1 051*564
         EXOImageView tree2 = addImage(909, 111, R.drawable.tree_ol_2, screen);        // tree_ol_2 909*111
         EXOImageView tree3 = addImage(728, 0, R.drawable.tree_ol_3, screen);          // tree_ol_3 728*000
@@ -115,7 +115,7 @@ public class ExoAnimationActivity extends Activity {
  
         runAnimation(logo, 10.0, (EXOAnimationGenerator)EXOAnimationGenerator.create().addAnimation(EXOAnimationElementRepeat.create(10.0, EXOAnimationElementWiggle.create(0, 3, 2.5))));
         runAnimation(ray, fps,(EXOAnimationGenerator)EXOAnimationGenerator.create().addAnimation(EXOAnimationElementRotate.create(0, 80, 16)));
-        runAnimation(kakaoText, fps*3.0,(EXOAnimationGenerator)EXOAnimationGenerator.create().addAnimation(EXOAnimationElementRepeat.create(20.0, EXOAnimationElementBlink.create(0, 1,0.2)).addAnimation(wiggleAlone)));
+        runAnimation(kakaoText, fps*3.0,(EXOAnimationGenerator)EXOAnimationGenerator.create().addAnimation(EXOAnimationElementRepeat.create(20.0, EXOAnimationElementBlink.create(0, 1,0.2)).addAnimation(EXOAnimationElementRepeat.create(10, EXOAnimationElementWobble.create(0, 0.5, 0.1).addAnimation(EXOAnimationElementJump.create(0,1.0,30))))));
 
         tree1.anchorY = 1.0;
         tree2.anchorY = 1.0;
