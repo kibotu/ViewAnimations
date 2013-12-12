@@ -404,49 +404,71 @@ class EXOAnimationGenerator extends EXOAnimationElement
         return ret;
     }
 
-    ArrayList<Animation> generateWholeAnimation(double timeDelta, EXOImageView image)
+    double endTime;
+    public void determineEndTime()
     {
-
-        double startTime = 0.0;
-        double endTime = 0.0;
-
         for (int i = 0; i < elements.size(); ++i)
         {
             EXOAnimationElement element = elements.get(i);
             double endHere = element.startTime + element.getDuration();
-
             if (endHere > endTime) endTime = endHere;
         }
+    }
 
+    Animation generateAnimationNr(int nr,double timeDelta, EXOImageView image)
+    {
+        if (nr == 0)
+        {
+            // this can lead to problems, since you must visit the 0 in anycase when calculating the animation
+            // if you access the nr randomly (e.g. not starting from 0/-1) then call determineEndTime for yourself
+            determineEndTime();
+        }
+
+        if (nr == -1)
+        {
+            if (!eps(this.waitBefore*this.timeScale,0.0))
+            {
+                Animation tempAnimation = new Animation(){};
+                if (waitBeforeHidden)
+                    tempAnimation = new AlphaAnimation(0,0);
+                AnimationSet animationSet = new AnimationSet(true);
+                animationSet.setDuration((long) (this.waitBefore * this.timeScale * 1000.0));
+                animationSet.setInterpolator(new LinearInterpolator());
+                animationSet.addAnimation(tempAnimation);
+                return animationSet;
+            }
+            return null;
+        }
+
+        double from = nr * timeDelta * this.timeScale;
+        double to = (nr + 1) * timeDelta * this.timeScale;
+        if (nr >= 0 && to <= endTime)
+        {
+            Animation anim = generateAnimationFromTimeToTime(from, to, image,(nr == 0) && waitBeforeHidden);
+            return anim;
+        }
+        if (from < endTime && to >= endTime)
+        {
+            Animation anim = generateAnimationFromTimeToTime(from, endTime, image,(nr == 0) && waitBeforeHidden);
+            return anim;
+        }
+
+        return null;
+    }
+
+    ArrayList<Animation> generateWholeAnimation(double timeDelta, EXOImageView image)
+    {
         ArrayList<Animation> ret = new ArrayList<Animation>();
-
-        if (!eps(this.waitBefore*this.timeScale,0.0))
+        Animation before = generateAnimationNr(-1,timeDelta,image);
+        if (before != null)
+            ret.add(before);
+        int nr = 0;
+        Animation anim = generateAnimationNr(nr,timeDelta,image);
+        while(anim != null)
         {
-            Animation tempAnimation = new Animation(){};
-            if (waitBeforeHidden)
-                tempAnimation = new AlphaAnimation(0,0);
-            AnimationSet animationSet = new AnimationSet(true);
-            animationSet.setDuration((long) (this.waitBefore * this.timeScale * 1000.0));
-            animationSet.setInterpolator(new LinearInterpolator());
-            animationSet.addAnimation(tempAnimation);
-            ret.add(animationSet);
-        }
-
-        boolean first = true;
-        double time = startTime * this.timeScale;
-        for (; time < endTime * this.timeScale; time += timeDelta * this.timeScale)
-        {
-            Animation anim = generateAnimationFromTimeToTime(time, time + timeDelta * this.timeScale, image,first && waitBeforeHidden);
             ret.add(anim);
-            first = false;
-        }
-        endTime -= 0.001;// das delta issnen bissl arbitary
-        endTime *= this.timeScale;
-        if (endTime>time)
-        {
-            Animation anim = generateAnimationFromTimeToTime(time, endTime, image,first && waitBeforeHidden);
-            first = false;
-            ret.add(anim);
+            nr++;
+            anim = generateAnimationNr(nr,timeDelta,image);
         }
 
         return ret;
@@ -970,10 +992,21 @@ class EXOAnimationQueue implements Animation.AnimationListener {
     EXOImageView viewToRunOn;
     Animation currentActive;
 
+    boolean dynamic = true;
+    double generatorFPS;
+    EXOAnimationGenerator generator;
+
+
     void generateWithCollection(EXOAnimationGenerator animation, EXOImageView toStartOn, double fps)
     {
         viewToRunOn = toStartOn;
-        animations = animation.generateWholeAnimation(1.0 / fps, viewToRunOn);
+        if (!dynamic)
+            animations = animation.generateWholeAnimation(1.0 / fps, viewToRunOn);
+        else
+        {
+            generator = animation;
+            generatorFPS = fps;
+        }
     }
 
     void run()
@@ -985,25 +1018,50 @@ class EXOAnimationQueue implements Animation.AnimationListener {
     boolean next()
     {
         currentIndex++;
-        if (currentIndex == animations.size())
+        if (!dynamic)
         {
-            if (looping) {
-                run();
-                return true;
+            if (currentIndex == animations.size())
+            {
+                if (looping) {
+                    run();
+                    return true;
+                }
+                return false;
             }
-            return false;
         }
 
         if (currentActive != null)
             currentActive.setAnimationListener(null);
-        currentActive = animations.get(currentIndex);
+
+        if (!dynamic)
+            currentActive = animations.get(currentIndex);
+        else
+        {
+            // sometimes we have a pause frame as -1 element
+            currentActive = generator.generateAnimationNr(currentIndex-1,1.0 / generatorFPS,viewToRunOn);
+            if (currentIndex == 0 && currentActive == null)
+            {
+                currentIndex++;
+                currentActive = generator.generateAnimationNr(currentIndex-1,1.0 / generatorFPS,viewToRunOn);
+            }
+        }
+
         if (currentActive != null)
         {
             currentActive.setAnimationListener(this);
             viewToRunOn.clearAnimation();
             viewToRunOn.startAnimation(currentActive);
-        } else
-            return next();
+        }
+        else
+        {
+            if (dynamic)
+            {
+                run();
+                return true;
+            }
+            else
+                return next();
+        }
         return true;
     }
 
