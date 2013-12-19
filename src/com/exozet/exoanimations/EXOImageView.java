@@ -1,32 +1,41 @@
-package sandbox.android.animation;
+package com.exozet.exoanimations;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.view.animation.Transformation;
 import android.widget.ImageView;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jan.rabe
- * Date: 09.12.13
- * Time: 16:15
- * To change this template use File | Settings | File Templates.
- */
 public class EXOImageView extends ImageView {
 
-    double anchorX = 0.5;
-    double anchorY = 0.5;
+    double anchorX;
+    public double anchorY;
+    String name;
 
     public EXOImageView(final Context context, final AttributeSet attrs, final int defStyle) {
         super(context, attrs, defStyle);
+        init();
     }
 
     public EXOImageView(final Context context, final AttributeSet attrs) {
-
         super(context, attrs);
+        init();
     }
 
-    EXOImageView(final Context context) {
+    public EXOImageView(final Context context) {
         super(context);
+        init();
+    }
+
+    String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    private void init() {
+        anchorX = 0.5;
+        anchorY = 0.5;
+        name = "";
     }
 }

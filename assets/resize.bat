@@ -1,0 +1,2 @@
+C:\mgames\lines\tools\imagemagick\mogrify  -resize 50% -quality 100 C:\jan\android-animation\res\drawable-nodpi\*.png
+C:\mgames\lines\tools\compress_pngs\pngquant --verbose --speed 1 --force --ext .png 32 C:\jan\android-animation\res\drawable-nodpi\*.png

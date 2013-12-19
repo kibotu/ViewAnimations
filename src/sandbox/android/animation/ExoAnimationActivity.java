@@ -3,12 +3,16 @@ package sandbox.android.animation;
 import android.app.Activity;
 import android.graphics.PointF;
 import android.os.Bundle;
-import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import com.exozet.exoanimations.EXOAnimationGenerator;
+import com.exozet.exoanimations.EXOAnimationScreenConfig;
+import com.exozet.exoanimations.EXOAnimationsCollection;
+import com.exozet.exoanimations.EXOImageView;
+import com.exozet.exoanimations.elements.*;
+import com.exozet.exoanimations.interpolation.EXOAnimationCurveCosineInOut;
 
 import java.util.ArrayList;
 
@@ -30,54 +34,56 @@ public class ExoAnimationActivity extends Activity {
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-
-        createIntroScreenScene();
-    }
-
-    public void runAnimation(EXOImageView view, double fps, EXOAnimationGenerator generator) {
-        generator.timeScale = 0.5;
-        fps *= 0.575;
-        final EXOAnimationQueue queue = new EXOAnimationQueue();
-        queue.generateWithCollection(generator, view, fps);
-        queue.looping = true;
-        queue.run();
+        createJellySplashScreenScene();
     }
 
     /**
      * @see <a href="https://redmine.exozet.com/issues/37448">Export Intro Screen</a>
      */
     static boolean initialized = false;
-    public void createIntroScreenScene() {
-        if (initialized)
-            return;
-        initialized = true;
-        EXOAnimationScreenConfig screen = EXOAnimationScreenConfig.x600;
+
+    /**
+     * @see <a href="https://redmine.exozet.com/issues/37448">Export Intro Screen</a>
+     */
+    public void createJellySplashScreenScene() {
+
+        EXOAnimationsCollection collection = new EXOAnimationsCollection(this, layout);
+
+        // HEY JAN: ich hab die Bilder um die H�lfte runterskaliert.. 50%
+        collection.layout = layout;
+        // hier muss ein bisschen mit den parametern rumgespielt werden
+        // in dem intellij project functionieren die parameter mit 1.0 aber irgendwie is die view die �bergeben wird (das relativelayout anders)
+        // wenn es probleme mit den animationen geben sollte
+        // die repeat animation is nicht 100% perfekt programmiert
+        // versuchen animationen nicht zu reusen (manchmal ist es besser einfach eine neue instanz zu generieren)
+        // in der lines activity in showJellySplashScreen the calling command for this function is commented out / reenable it
+        // 256 color pngs process way (ultra)faster and smaller imagesizes dont hurt too..
+        EXOAnimationScreenConfig screen = EXOAnimationScreenConfig.getResolution(this);
         EXOAnimationGenerator.screen = screen;
 
         double logoFadeInTime = 0.5;
 
-        addImage(355, 576, R.drawable.bg, screen);               // bg 355*576
-        EXOImageView ray    = addImage(314, 242, R.drawable.ray, screen);              // ray 314*242
+        addImage(355, 576, R.drawable.bg_intro, screen);               // bg 355*576
+        EXOImageView ray = addImage(314, 242, R.drawable.ray, screen);              // ray 314*242
         int particleCount = 24;
-        for (int i = 0; i < particleCount; ++i)
-        {
-            EXOImageView particle = addImage(314,242,R.drawable.particle,screen);
+        for (int i = 0; i < particleCount; ++i) {
+            EXOImageView particle = addImage(314, 242, R.drawable.particle, screen);
             EXOAnimationGenerator generator = EXOAnimationGenerator.create();
-            double angle = Math.random()*2.0*Math.PI;
+            double angle = Math.random() * 2.0 * Math.PI;
 
-            generator.addAnimation(EXOAnimationElementWaitInvisible.create(0.0, logoFadeInTime+Math.random()*2.0).appendAnimation(EXOAnimationElementRepeat.create(20.0, EXOAnimationElementMove.create(0, 2, 0, 0, Math.sin(angle) * 600.0, Math.cos(angle) * 600.0).addAnimation(EXOAnimationElementFadeOut.create(0, 2)))));
-            runAnimation(particle,5.0,generator);
+            generator.addAnimation(EXOAnimationElementWaitInvisible.create(0.0, logoFadeInTime + Math.random() * 2.0).appendAnimation(EXOAnimationElementRepeat.create(20.0, EXOAnimationElementMove.create(0, 2, 0, 0, Math.sin(angle) * 600.0, Math.cos(angle) * 600.0).addAnimation(EXOAnimationElementFadeOut.create(0, 2)))));
+            collection.runAnimation(particle, 5.0, generator);
         }
 
         double sy = -800;
 
-        EXOImageView green  = addImage(355+90, 596-30*2  , R.drawable.jelly_green, screen);      // jelly_green 355*576
-        EXOImageView red    = addImage(355+225, 596-25*3 , R.drawable.jelly_red, screen);        // jelly_red 355*576
-        EXOImageView pink   = addImage(355+150, 596-20*2 , R.drawable.jelly_pink, screen);       // jelly_pink 355*576
-        EXOImageView blue   = addImage(355+70, 596       , R.drawable.jelly_blue, screen);       // jelly_blue 355*576
-        EXOImageView yellow = addImage(355+300, 596      , R.drawable.jelly_yellow, screen);     // jelly_yellow 355*576
-        EXOImageView logo   = addImage(294, 268, R.drawable.logo, screen);             // logo 294*268
-        EXOImageView kakaoText = addImage(239+20, 530, R.drawable.speech_ballon, screen);    // speech_ballon 239*530
+        EXOImageView green = addImage(355 + 90, 596 - 30 * 2, R.drawable.jelly_green, screen);      // jelly_green 355*576
+        EXOImageView red = addImage(355 + 225, 596 - 25 * 3, R.drawable.jelly_red, screen);        // jelly_red 355*576
+        EXOImageView pink = addImage(355 + 150, 596 - 20 * 2, R.drawable.jelly_pink, screen);       // jelly_pink 355*576
+        EXOImageView blue = addImage(355 + 70, 596, R.drawable.jelly_blue, screen);       // jelly_blue 355*576
+        EXOImageView yellow = addImage(355 + 300, 596, R.drawable.jelly_yellow, screen);     // jelly_yellow 355*576
+        EXOImageView logo = addImage(294, 268, R.drawable.logo_intro, screen);             // logo 294*268
+        EXOImageView kakaoText = addImage(239 + 20, 530, R.drawable.speech_ballon, screen);    // speech_ballon 239*530
         EXOImageView tree1 = addImage(51, 564, R.drawable.tree_ol_1, screen);         // tree_ol_1 051*564
         EXOImageView tree2 = addImage(909, 111, R.drawable.tree_ol_2, screen);        // tree_ol_2 909*111
         EXOImageView tree3 = addImage(728, 0, R.drawable.tree_ol_3, screen);          // tree_ol_3 728*000
@@ -86,7 +92,7 @@ public class ExoAnimationActivity extends Activity {
         EXOImageView critter2 = addImage(435, 1067, R.drawable.critter_2, screen);       // critter_2 435*1067
         EXOImageView critter3 = addImage(845, 1135, R.drawable.critter_3, screen);       // critter_3 845*1135
 
-        ArrayList<PointF> points = new ArrayList<PointF>(100);
+        ArrayList<PointF> points = new ArrayList<>(100);
         points.add(new PointF(0, 0));
         for (int i = 0; i < 100; ++i) {
             PointF point = new PointF();
@@ -97,17 +103,17 @@ public class ExoAnimationActivity extends Activity {
 
         double depth = 0.325;
         double wtime = 32;
-        EXOAnimationElement wiggleAlone = EXOAnimationElementRepeat.create(wtime/0.75, EXOAnimationElementWiggle.create(0, 0.75, 15.0*depth)).addAnimation(EXOAnimationElementRepeat.create(wtime/1.0, EXOAnimationElementWobble.create(0, 1, 0.3*depth).applyCurve(EXOAnimationCurveCosineInOut.create(0.5, 0.5))));
+        EXOAnimationElement wiggleAlone = EXOAnimationElementRepeat.create(wtime / 0.75, EXOAnimationElementWiggle.create(0, 0.75, 15.0 * depth)).addAnimation(EXOAnimationElementRepeat.create(wtime / 1.0, EXOAnimationElementWobble.create(0, 1, 0.3 * depth).applyCurve(EXOAnimationCurveCosineInOut.create(0.5, 0.5))));
 
-        EXOAnimationGenerator wiggle = (EXOAnimationGenerator)EXOAnimationGenerator.create()
+        EXOAnimationGenerator wiggle = (EXOAnimationGenerator) EXOAnimationGenerator.create()
                 .addAnimation(wiggleAlone)
-                .addAnimation(EXOAnimationElementRepeat.create(wtime/(0.5+0.7), EXOAnimationElementJump.create(0, 0.5, 30.0).appendAnimation(EXOAnimationElementJump.create(0, 0.7, 50.0)))
+                .addAnimation(EXOAnimationElementRepeat.create(wtime / (0.5 + 0.7), EXOAnimationElementJump.create(0, 0.5, 30.0).appendAnimation(EXOAnimationElementJump.create(0, 0.7, 50.0)))
                 );
 
         double fps = 4.0;
         double wave = 0.3782;
 
-        double staticDelay = 0.2+logoFadeInTime;
+        double staticDelay = 0.2 + logoFadeInTime;
         double varDelay = 0.2;
 
         double d1 = staticDelay + varDelay * 0.0;
@@ -116,47 +122,50 @@ public class ExoAnimationActivity extends Activity {
         double d4 = staticDelay + varDelay * 3.0;
         double d5 = staticDelay + varDelay * 4.0;
 
-        runAnimation(blue,      fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 0.0,true).appendAnimation(EXOAnimationElementMove.create(0.0, d1, 0, sy, 0, 0).addAnimation(EXOAnimationElementFadeIn.create(0.0, d1))).appendAnimation(wiggle));
-        runAnimation(green,     fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 1.0,true).appendAnimation(EXOAnimationElementMove.create(0.0, d2, 0, sy, 0, 0).addAnimation(EXOAnimationElementFadeIn.create(0.0, d2))).appendAnimation(wiggle));
-        runAnimation(pink,      fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 2.0,true).appendAnimation(EXOAnimationElementMove.create(0.0, d3, 0, sy, 0, 0).addAnimation(EXOAnimationElementFadeIn.create(0.0, d3))).appendAnimation(wiggle));
-        runAnimation(red,       fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 3.0,true).appendAnimation(EXOAnimationElementMove.create(0.0, d4, 0, sy, 0, 0).addAnimation(EXOAnimationElementFadeIn.create(0.0, d4))).appendAnimation(wiggle));
-        runAnimation(yellow,    fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 4.0,true).appendAnimation(EXOAnimationElementMove.create(0.0, d5, 0, sy, 0, 0).addAnimation(EXOAnimationElementFadeIn.create(0.0, d5))).appendAnimation(wiggle));
+        collection.runAnimation(blue, fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 0.0, true).appendAnimation(EXOAnimationElementMove.create(0.0, d1, 0, sy, 0, 0).addAnimation(EXOAnimationElementFadeIn.create(0.0, d1))).appendAnimation(wiggle));
+        collection.runAnimation(green, fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 1.0, true).appendAnimation(EXOAnimationElementMove.create(0.0, d2, 0, sy, 0, 0).addAnimation(EXOAnimationElementFadeIn.create(0.0, d2))).appendAnimation(wiggle));
+        collection.runAnimation(pink, fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 2.0, true).appendAnimation(EXOAnimationElementMove.create(0.0, d3, 0, sy, 0, 0).addAnimation(EXOAnimationElementFadeIn.create(0.0, d3))).appendAnimation(wiggle));
+        collection.runAnimation(red, fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 3.0, true).appendAnimation(EXOAnimationElementMove.create(0.0, d4, 0, sy, 0, 0).addAnimation(EXOAnimationElementFadeIn.create(0.0, d4))).appendAnimation(wiggle));
+        collection.runAnimation(yellow, fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 4.0, true).appendAnimation(EXOAnimationElementMove.create(0.0, d5, 0, sy, 0, 0).addAnimation(EXOAnimationElementFadeIn.create(0.0, d5))).appendAnimation(wiggle));
 
         wave = 0.1;
         double sy2 = 200;
-        runAnimation(critter1, fps  ,(EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 0.0,true).appendAnimation(EXOAnimationElementMove.create(0.0, d1, 0, sy2, 0, 0)).appendAnimation(wiggle));
-        runAnimation(critter2, fps  ,(EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 1.0,true).appendAnimation(EXOAnimationElementMove.create(0.0, d2, 0, sy2, 0, 0)).appendAnimation(wiggle));
-        runAnimation(critter3, fps  ,(EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 2.0,true).appendAnimation(EXOAnimationElementMove.create(0.0, d3, 0, sy2, 0, 0)).appendAnimation(wiggle));
-        runAnimation(critter4, fps  ,(EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 3.0,true).appendAnimation(EXOAnimationElementMove.create(0.0, d4, 0, sy2, 0, 0)).appendAnimation(wiggleAlone));
- 
-        runAnimation(logo, 10.0, (EXOAnimationGenerator) EXOAnimationGenerator.create()
-                .addAnimation(EXOAnimationElementMove.create(0, logoFadeInTime, 0, -500, 0, 0).applyCurve(EXOAnimationCurveCosineInOut.create(0, 0.125))).addAnimation(EXOAnimationElementScale.create(0,logoFadeInTime,2,2,1,1)).addAnimation(EXOAnimationElementRotate.create(0,logoFadeInTime,-35,0))
+        collection.runAnimation(critter1, fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 0.0, true).appendAnimation(EXOAnimationElementMove.create(0.0, d1, 0, sy2, 0, 0)).appendAnimation(wiggle));
+        collection.runAnimation(critter2, fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 1.0, true).appendAnimation(EXOAnimationElementMove.create(0.0, d2, 0, sy2, 0, 0)).appendAnimation(wiggle));
+        collection.runAnimation(critter3, fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 2.0, true).appendAnimation(EXOAnimationElementMove.create(0.0, d3, 0, sy2, 0, 0)).appendAnimation(wiggle));
+        collection.runAnimation(critter4, fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().preDelay(wave * 3.0, true).appendAnimation(EXOAnimationElementMove.create(0.0, d4, 0, sy2, 0, 0)).appendAnimation(wiggleAlone));
+
+        collection.runAnimation(logo, 10.0, (EXOAnimationGenerator) EXOAnimationGenerator.create()
+                .addAnimation(EXOAnimationElementMove.create(0, logoFadeInTime, 0, -500, 0, 0).applyCurve(EXOAnimationCurveCosineInOut.create(0, 0.125))).addAnimation(EXOAnimationElementScale.create(0, logoFadeInTime, 2, 2, 1, 1)).addAnimation(EXOAnimationElementRotate.create(0, logoFadeInTime, -35, 0))
                 .addAnimation(EXOAnimationElementFadeIn.create(0, logoFadeInTime).applyCurve(EXOAnimationCurveCosineInOut.create(0, 0.125)))
                 .appendAnimation(EXOAnimationElementRepeat.create(10.0, EXOAnimationElementWiggle.create(0, 3, 2.5))));
-        runAnimation(ray, fps,(EXOAnimationGenerator)EXOAnimationGenerator.create().addAnimation(EXOAnimationElementRotate.create(0, 80, 0,12*360)).addAnimation(EXOAnimationElementFadeIn.create(0, 2.0)));
-        runAnimation(kakaoText, fps*1.5, (EXOAnimationGenerator) EXOAnimationGenerator.create().appendAnimation(EXOAnimationElementWaitInvisible.create(0.0, staticDelay + varDelay * 1.0)).
+        collection.runAnimation(ray, fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().addAnimation(EXOAnimationElementRotate.create(0, 80, 0, 12 * 360)).addAnimation(EXOAnimationElementFadeIn.create(0, 2.0)));
+        collection.runAnimation(kakaoText, fps * 1.5, (EXOAnimationGenerator) EXOAnimationGenerator.create().appendAnimation(EXOAnimationElementWaitInvisible.create(0.0, staticDelay + varDelay * 1.0)).
                 appendAnimation(EXOAnimationElementMove.create(0.0, varDelay * 1.0, 0, sy, 0, 0)).
-                addAnimation(EXOAnimationElementRepeat.create(wtime/1, EXOAnimationElementBlink.create(0, 1, 0.2)).addAnimation(EXOAnimationElementRepeat.create(wtime/1, EXOAnimationElementWobble.create(0, 0.5, 0.1).addAnimation(EXOAnimationElementJump.create(0, 1.0, 30))))));
+                addAnimation(EXOAnimationElementRepeat.create(wtime / 1, EXOAnimationElementBlink.create(0, 1, 0.2)).addAnimation(EXOAnimationElementRepeat.create(wtime / 1, EXOAnimationElementWobble.create(0, 0.5, 0.1).addAnimation(EXOAnimationElementJump.create(0, 1.0, 30))))));
 
         tree1.anchorY = 1.0;
         tree2.anchorY = 1.0;
         tree3.anchorY = 1.0;
-        runAnimation(tree1, fps,(EXOAnimationGenerator)EXOAnimationGenerator.create().addAnimation(EXOAnimationElementRepeat.create(10.0, EXOAnimationElementWiggle.create(0, 1,5.0))));
-        runAnimation(tree2, fps,(EXOAnimationGenerator)EXOAnimationGenerator.create().addAnimation(EXOAnimationElementRepeat.create(10.0, EXOAnimationElementWiggle.create(0, 1,5.0))));
-        runAnimation(tree3, fps,(EXOAnimationGenerator)EXOAnimationGenerator.create().addAnimation(EXOAnimationElementRepeat.create(10.0, EXOAnimationElementWiggle.create(0, 1,5.0))));
-
+        collection.runAnimation(tree1, fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().addAnimation(EXOAnimationElementRepeat.create(10.0, EXOAnimationElementWiggle.create(0, 1, 5.0))));
+        collection.runAnimation(tree2, fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().addAnimation(EXOAnimationElementRepeat.create(10.0, EXOAnimationElementWiggle.create(0, 1, 5.0))));
+        collection.runAnimation(tree3, fps, (EXOAnimationGenerator) EXOAnimationGenerator.create().addAnimation(EXOAnimationElementRepeat.create(10.0, EXOAnimationElementWiggle.create(0, 1, 5.0))));
     }
 
     public EXOImageView addImage(final double x, final double y, final int resourceId, final EXOAnimationScreenConfig screen) {
+        System.out.print("EXOAnimations: Adding an image for the Resource:" + resourceId + "\n");
         EXOImageView img = new EXOImageView(this);
+        img.setName("resId:" + resourceId);
         //img.setDrawingCacheEnabled(true);
-        //img.setDrawingCacheQuality(EXOImageView.DRAWING_CACHE_QUALITY_AUTO);
-        img.setScaleType(ImageView.ScaleType.FIT_XY); //(correct aspect ratio later)
+        //img.setDrawingCacheQuality(EXOImageView.DRAWING_CACHE_QUALITY_LOW);
+        img.setScaleType(EXOImageView.ScaleType.FIT_XY); //(correct aspect ratio later)
         img.setImageResource(resourceId);
         RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-        lp.width = (int) screen.scaleX(img.getDrawable().getIntrinsicWidth());
-        lp.height = (int) screen.scaleY(img.getDrawable().getIntrinsicHeight());
-        lp.setMargins((int) screen.posX(x) - lp.width / 2, (int) screen.posY(y) - lp.height / 2, -lp.width / 2, -lp.height / 2);
+        lp.width = (int) screen.imageViewScaleX(img.getDrawable().getIntrinsicWidth());
+        lp.height = (int) screen.imageViewScaleY(img.getDrawable().getIntrinsicHeight());
+        double posX = screen.imageViewPositionX(x);
+        double posY = screen.imageViewPositionY(y);
+        lp.setMargins((int) posX - lp.width / 2, (int) posY - lp.height / 2, -lp.width / 2, -lp.height / 2);
         img.setAdjustViewBounds(true);
         img.setLayoutParams(lp);
         layout.addView(img);
