@@ -14,7 +14,7 @@ public class MainActivity extends Activity {
 
     Button btnFadeIn, btnFadeOut, btnCrossFade, btnBlink, btnZoomIn,
             btnZoomOut, btnRotate, btnMove, btnSlideUp, btnSlideDown,
-            btnBounce, btnSequential, btnTogether, btnExoanim, btnSprites;
+            btnBounce, btnSequential, btnTogether, btnExoanim, btnSprites, btnCustomView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +36,7 @@ public class MainActivity extends Activity {
         btnSequential = (Button) findViewById(R.id.btnSequential);
         btnTogether = (Button) findViewById(R.id.btnTogether);
         btnSprites = (Button) findViewById(R.id.btnSprites);
+        btnCustomView = (Button) findViewById(R.id.btnCustomView);
 
 		/*
          * Buttons click events
@@ -173,12 +174,22 @@ public class MainActivity extends Activity {
         });
 
 
-        // Together
+        // sprites
         btnSprites.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent i = new Intent(MainActivity.this,
                         ElaineAnimatedActivity.class);
+                startActivity(i);
+            }
+        });
+
+        // custom view
+        btnCustomView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(MainActivity.this,
+                        CustomViewActivity.class);
                 startActivity(i);
             }
         });

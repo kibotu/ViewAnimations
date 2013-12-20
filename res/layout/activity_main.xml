@@ -173,12 +173,20 @@
                 android:text="Together Animation" />
 
             <Button
-                    android:id="@+id/btnSprites"
+                android:id="@+id/btnSprites"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:text="Sprite Animation" />
+
+            <Button
+                    android:id="@+id/btnCustomView"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:layout_margin="5dp"
                     android:layout_weight="1"
-                    android:text="Sprite Animation" />
+                    android:text="Custom View" />
         </TableRow>
     </TableLayout>
 

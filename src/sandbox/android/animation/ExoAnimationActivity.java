@@ -3,6 +3,7 @@ package sandbox.android.animation;
 import android.app.Activity;
 import android.graphics.PointF;
 import android.os.Bundle;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -46,6 +47,11 @@ public class ExoAnimationActivity extends Activity {
      * @see <a href="https://redmine.exozet.com/issues/37448">Export Intro Screen</a>
      */
     public void createJellySplashScreenScene() {
+
+        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) {
+            // getWindow().setFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED, WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+            layout.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        }
 
         EXOAnimationsCollection collection = new EXOAnimationsCollection(this, layout);
 
