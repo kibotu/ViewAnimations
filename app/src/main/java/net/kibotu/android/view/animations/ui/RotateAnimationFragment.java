@@ -3,18 +3,20 @@ package net.kibotu.android.view.animations.ui;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.TextView;
+import android.widget.ImageView;
 import butterknife.Bind;
-import butterknife.OnItemClick;
+import butterknife.OnClick;
 import net.kibotu.android.view.animations.R;
+
+import static net.kibotu.android.view.animations.R.id.btnStart;
 
 /**
  * Created by Nyaruhodo on 30.03.2016.
  */
 public class RotateAnimationFragment extends BaseFragment {
 
-    @Bind(R.id.txtMessage)
-    TextView txtMessage;
+    @Bind(R.id.imgLogo)
+    ImageView imgLogo;
 
     // Animation
     Animation anim;
@@ -23,22 +25,22 @@ public class RotateAnimationFragment extends BaseFragment {
     protected void onViewCreated() {
 
         // load the animation
-        anim = AnimationUtils.loadAnimation(getContext(), R.anim.blink);
+        anim = AnimationUtils.loadAnimation(getContext(), R.anim.rotate);
 
         // set animation listener
         anim.setAnimationListener(this);
     }
 
-    @OnItemClick(R.id.btnStart)
+    @OnClick(btnStart)
     void onClick() {
-        txtMessage.setVisibility(View.VISIBLE);
+        imgLogo.setVisibility(View.VISIBLE);
 
         // start the animation
-        txtMessage.startAnimation(anim);
+        imgLogo.startAnimation(anim);
     }
 
     @Override
     public int getLayout() {
-        return R.layout.fragment_blink;
+        return R.layout.fragment_rotate;
     }
 }

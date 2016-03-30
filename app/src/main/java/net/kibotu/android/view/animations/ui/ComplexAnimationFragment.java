@@ -5,7 +5,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 import butterknife.Bind;
-import butterknife.OnItemClick;
+import butterknife.OnClick;
 import net.kibotu.android.view.animations.R;
 
 /**
@@ -29,7 +29,7 @@ public class ComplexAnimationFragment extends BaseFragment {
         anim.setAnimationListener(this);
     }
 
-    @OnItemClick(R.id.btnStart)
+    @OnClick(R.id.btnStart)
     void onClick() {
         txtMessage.setVisibility(View.VISIBLE);
 
