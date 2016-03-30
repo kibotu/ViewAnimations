@@ -55,7 +55,7 @@ install: true
 script:
 
   - ./gradlew -v
-  - ./gradlew clean app:build --stacktrace --info -Dpre-dex=false
+  - ./gradlew clean build --stacktrace --info -Dpre-dex=false
 
 after_script: true
   # - adb logcat &

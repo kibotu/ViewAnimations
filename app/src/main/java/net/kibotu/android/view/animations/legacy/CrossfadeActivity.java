@@ -22,7 +22,7 @@ public class CrossfadeActivity extends Activity implements AnimationListener {
     protected void onCreate(Bundle savedInstanceState) {
         // TODO Auto-generated method stub
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_crossfade);
+        setContentView(R.layout.fragment_crossfade);
 
         txtMessage1 = (TextView) findViewById(R.id.txtMessage1);
         txtMessage2 = (TextView) findViewById(R.id.txtMessage2);
