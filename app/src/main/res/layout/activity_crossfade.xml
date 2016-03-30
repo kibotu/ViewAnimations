@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
-    
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
     <TextView android:id="@+id/txtMessage1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="This text will fade out"
-        android:layout_centerInParent="true"
-        android:textSize="25dp"/> 
-        
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:text="This text will fade out"
+              android:layout_centerInParent="true"
+              android:textSize="25dp"/>
+
     <TextView android:id="@+id/txtMessage2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="This text will fade in"
-        android:layout_centerInParent="true"
-        android:textSize="25dp"
-        android:visibility="gone"/> 
-        
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:text="This text will fade in"
+              android:layout_centerInParent="true"
+              android:textSize="25dp"
+              android:visibility="gone"/>
+
     <Button android:id="@+id/btnStart"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Start Animation"
-        android:layout_marginTop="30dp"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="20dp"/>
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Start Animation"
+            android:layout_marginTop="30dp"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="20dp"/>
 
 </RelativeLayout>

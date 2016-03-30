@@ -6,7 +6,6 @@ import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import butterknife.Bind;
 import butterknife.OnClick;
-import butterknife.OnItemClick;
 import net.kibotu.android.view.animations.R;
 
 /**
