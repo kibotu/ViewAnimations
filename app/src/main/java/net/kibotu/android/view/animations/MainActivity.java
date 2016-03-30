@@ -118,7 +118,7 @@ public class MainActivity extends AppCompatActivity
                 fragment = new FadeOutAnimationFragment();
                 break;
             case R.id.move:
-                fragment = new MoveAnimationFragment();
+                fragment = new TranslateAnimationFragment();
                 break;
             case R.id.rotate:
                 fragment = new RotateAnimationFragment();

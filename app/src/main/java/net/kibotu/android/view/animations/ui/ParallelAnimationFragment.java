@@ -39,6 +39,6 @@ public class ParallelAnimationFragment extends BaseFragment {
 
     @Override
     public int getLayout() {
-        return R.layout.fragment_blink;
+        return R.layout.activity_together;
     }
 }
