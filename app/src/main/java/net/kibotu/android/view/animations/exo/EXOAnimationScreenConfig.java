@@ -1,6 +1,7 @@
 package net.kibotu.android.view.animations.exo;
 
-import android.app.Activity;
+
+import net.kibotu.android.deviceinfo.library.display.Dimension;
 
 import static net.kibotu.android.deviceinfo.library.display.Display.getScreenDimensions;
 import static net.kibotu.android.deviceinfo.library.display.Display.isTablet;
@@ -15,6 +16,9 @@ public enum EXOAnimationScreenConfig {
     x768(0.5, 0.5),
     x800(0.52083, 0.520833),
     x1080(0.703125, 0.703125),
+    x1440(1, 1), // todo
+    x1920(1, 1), // todo
+    x2560(1, 1), // todo
     NO_SCALING(1, 1);
 
     static double globalImageViewScaleX = 1.0, globalImageViewScaleY = 1.0;
@@ -66,17 +70,18 @@ public enum EXOAnimationScreenConfig {
         return y * scaleY / x768.scaleY * yAspectFix * globalImageViewPositionScaleY;
     }
 
-    public static EXOAnimationScreenConfig getResolution(final Activity context) {
+    public static EXOAnimationScreenConfig getResolution() {
+
 
         EXOAnimationScreenConfig config = EXOAnimationScreenConfig.x320;
 
-        //Logger.v("jniresolution", "width = " + helper.mScreenWidth + " height = " + helper.mScreenHeight);
         EXOAnimationScreenConfig.globalImageViewScaleX *= 2.0; // images are scaled to 50% but based on 720
         EXOAnimationScreenConfig.globalImageViewScaleY *= 2.0; // images are scaled to 50% but based on 720
         EXOAnimationScreenConfig.globalImageViewPositionScaleY *= isTablet() ? 1.2 : 1.0;
 
         // Device
-        int width = getScreenDimensions().width;
+        Dimension screenDimensions = getScreenDimensions();
+        int width = Math.max(screenDimensions.width, screenDimensions.height);
         if (width >= 480 && width < 540) {
             config = EXOAnimationScreenConfig.x480;
         } else if (width >= 540 && width < 600) {
@@ -91,10 +96,12 @@ public enum EXOAnimationScreenConfig {
             config = EXOAnimationScreenConfig.x800;
         } else if (width >= 1080 && width < 1200) {
             config = EXOAnimationScreenConfig.x1080;
-        } else if (width >= 1200 && width < 1600) {
-            config = EXOAnimationScreenConfig.x1080;
-        } else if (width >= 1600) {
-            config = EXOAnimationScreenConfig.x1080;
+        } else if (width >= 1200 && width < 1920) {
+            config = EXOAnimationScreenConfig.x1440;
+        } else if (width >= 1920 && width < 2560) {
+            config = EXOAnimationScreenConfig.x1920;
+        } else if (width >= 2560) {
+            config = EXOAnimationScreenConfig.x2560;
         }
         return config;
     }

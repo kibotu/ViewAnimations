@@ -1,14 +1,16 @@
 package net.kibotu.android.view.animations.exo;
 
 import android.content.Context;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
 public class EXOAnimationsCollection {
 
     public Context context;
-    public RelativeLayout layout;
+    public ViewGroup layout;
 
-    public EXOAnimationsCollection(final Context context, final RelativeLayout layout) {
+    public EXOAnimationsCollection(final Context context, final ViewGroup layout) {
         this.context = context;
         this.layout = layout;
     }
