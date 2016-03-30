@@ -19,7 +19,7 @@ android:
   components:
 
       - tools
-      - build-tools-23.0.2
+      - build-tools-23.0.3
       - android-23
       - platform-tools
       - extra-android-support
@@ -55,7 +55,7 @@ install: true
 script:
 
   - ./gradlew -v
-  - ./gradlew clean assembleDebug --stacktrace --info
+  - ./gradlew clean build --stacktrace --info
 
 after_script: true
   # - adb logcat &
